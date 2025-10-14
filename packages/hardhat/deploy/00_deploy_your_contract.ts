@@ -1,22 +1,20 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { Contract } from "ethers";
 
 /**
- * Deploys MockPYUSD and SimpleAccount contracts for gasless PYUSD payments
+ * Deploys SimpleAccount contract for gasless PYUSD payments on Sepolia
  *
  * @param hre HardhatRuntimeEnvironment object.
  */
-const deployGaslessPaymentContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+const deploySepoliaContracts: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  // Deploy MockPYUSD (for local testing only)
-  const mockPYUSD = await deploy("MockPYUSD", {
-    from: deployer,
-    log: true,
-    autoMine: true,
-  });
+  // Only deploy on Sepolia
+  if (hre.network.name !== "sepolia") {
+    console.log("⏭️ Skipping deployment on", hre.network.name, "- only deploying to Sepolia");
+    return;
+  }
 
   // Deploy SimpleAccount (EIP-7702 compatible)
   const simpleAccount = await deploy("SimpleAccount", {
@@ -25,16 +23,11 @@ const deployGaslessPaymentContracts: DeployFunction = async function (hre: Hardh
     autoMine: true,
   });
 
-  // Get the deployed contracts
-  const mockPYUSDContract = await hre.ethers.getContract<Contract>("MockPYUSD", deployer);
-
-  console.log("🚀 MockPYUSD deployed at:", mockPYUSD.address);
   console.log("🚀 SimpleAccount deployed at:", simpleAccount.address);
-  console.log("💰 Deployer PYUSD balance:", await mockPYUSDContract.balanceOf(deployer));
+  console.log("📝 PYUSD contract on Sepolia: 0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9");
+  console.log("💡 Users can now use EIP-7702 + Pimlico for gasless PYUSD transfers!");
 };
 
-export default deployGaslessPaymentContracts;
+export default deploySepoliaContracts;
 
-// Tags are useful if you have multiple deploy files and only want to run one of them.
-// e.g. yarn deploy --tags GaslessPayment
-deployGaslessPaymentContracts.tags = ["GaslessPayment"];
+deploySepoliaContracts.tags = ["SepoliaPayment"];

@@ -1,9 +1,7 @@
-"use client";
-
 import { useState } from "react";
 import { NextPage } from "next";
 import { sepolia } from "viem/chains";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage, useSignTypedData } from "wagmi";
 import { useReadContract } from "wagmi";
 import { Address, AddressInput, EtherInput } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
@@ -13,17 +11,15 @@ import { notification } from "~~/utils/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+  const { signTypedDataAsync } = useSignTypedData();
   const [recipient, setRecipient] = useState(DEFAULT_TEST_VALUES.RECIPIENT_ADDRESS);
-  const [amount, setAmount] = useState<string>(DEFAULT_TEST_VALUES.AMOUNT_PYUSD);
+  const [amount, setAmount] = useState(DEFAULT_TEST_VALUES.AMOUNT_PYUSD);
   const [isLoading, setIsLoading] = useState(false);
   const { targetNetwork } = useTargetNetwork();
 
   // Read PYUSD balance on Sepolia
-  const {
-    data: pyusdBalance,
-    error: balanceError,
-    isLoading: balanceLoading,
-  } = useReadContract({
+  const { data: pyusdBalance } = useReadContract({
     address: CONTRACTS.PYUSD,
     abi: [
       {
@@ -39,16 +35,12 @@ const Home: NextPage = () => {
     chainId: sepolia.id,
   });
 
-  // Debug logging
-  console.log("Balance Debug:", {
-    connectedAddress,
-    pyusdBalance,
-    balanceError,
-    balanceLoading,
-    contractAddress: CONTRACTS.PYUSD,
-  });
-
   const handleGaslessPayment = async () => {
+    if (!connectedAddress) {
+      notification.error("Please connect your wallet first");
+      return;
+    }
+
     if (!recipient || !amount) {
       notification.error("Please fill in all fields");
       return;
@@ -58,14 +50,17 @@ const Home: NextPage = () => {
 
     try {
       const result = await executeGaslessPayment({
+        userAddress: connectedAddress,
         recipientAddress: recipient as `0x${string}`,
         amount,
+        signMessage: signMessageAsync,
+        signTypedData: signTypedDataAsync,
       });
 
       if (result.success) {
         notification.success(`Gasless payment successful! TX: ${result.txHash}`);
       } else {
-        notification.error(`Payment failed`);
+        notification.error(`Payment failed: ${result.error}`);
       }
     } catch (error) {
       console.error("Payment error:", error);
@@ -97,13 +92,6 @@ const Home: NextPage = () => {
                   <Address address={connectedAddress} />
                   <div className="mt-2">
                     <strong>{pyusdBalance ? (Number(pyusdBalance) / 1e6).toFixed(2) : "0.00"} PYUSD</strong>
-                    <div className="text-xs text-gray-500 mt-1">Raw: {pyusdBalance?.toString() || "null"}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Loading: {balanceLoading ? "Yes" : "No"} | Error: {balanceError ? "Yes" : "No"}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Network: {targetNetwork.name} (ID: {targetNetwork.id})
-                    </div>
                   </div>
                 </div>
               ) : (
@@ -117,17 +105,17 @@ const Home: NextPage = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Recipient Address</label>
-                <AddressInput
-                  value={recipient}
-                  onChange={(val: string) => setRecipient(val as `0x${string}`)}
-                  placeholder="Enter recipient address"
-                />
+                <AddressInput value={recipient} onChange={setRecipient} placeholder="Enter recipient address" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Amount (PYUSD)</label>
-                <EtherInput value={amount} onChange={(val: string) => setAmount(val)} placeholder="Enter amount" />
+                <EtherInput value={amount} onChange={setAmount} placeholder="Enter amount" />
               </div>
-              <button className="btn btn-primary w-full" onClick={handleGaslessPayment} disabled={isLoading}>
+              <button
+                className="btn btn-primary w-full"
+                onClick={handleGaslessPayment}
+                disabled={isLoading || !connectedAddress}
+              >
                 {isLoading ? "Processing..." : "Send PYUSD (Gasless)"}
               </button>
             </div>

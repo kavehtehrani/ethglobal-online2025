@@ -1954,6 +1954,64 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/7715-permission-types@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@metamask/7715-permission-types@npm:0.3.0"
+  checksum: bb77021d9d6182baa2f98dd36d1a2402b5dd35da7bcd5ce99752aff93811f7c7bac31b59c250b08cea0c6e23275b5b730b0e85a6ca3c7158b8c3e45cb5d4aa05
+  languageName: node
+  linkType: hard
+
+"@metamask/abi-utils@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@metamask/abi-utils@npm:3.0.0"
+  dependencies:
+    "@metamask/superstruct": ^3.1.0
+    "@metamask/utils": ^11.0.1
+  checksum: 5ac03df29bbb6cb34073e84022f8c53782c46de2817abf057ad4efc841921cee5b9dba8958b22373191fbf111e81b59bbb22d715020e032e06d6a922d59e37cc
+  languageName: node
+  linkType: hard
+
+"@metamask/delegation-abis@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "@metamask/delegation-abis@npm:0.11.0"
+  checksum: 9baf343f073ddd2ba44ad1ebe6812eaf3dc2d372c207624f381e793b687495dba43ce4930cf66e0d3669f71d18787ff2d2dd5269df57b8e308051ed3c8a060a9
+  languageName: node
+  linkType: hard
+
+"@metamask/delegation-core@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "@metamask/delegation-core@npm:0.2.0"
+  dependencies:
+    "@metamask/abi-utils": ^3.0.0
+    "@metamask/utils": ^11.4.0
+    "@noble/hashes": ^1.8.0
+  checksum: edd5f0dc994c4a3f3029af8236c0926a32f218b9602c2604eb3d29e0b453f7f1b9eba28e76d6b84cc07724da1a581e6d9838ee69b2185ed013c7ebcf4b51ade9
+  languageName: node
+  linkType: hard
+
+"@metamask/delegation-deployments@npm:^0.12.0":
+  version: 0.12.0
+  resolution: "@metamask/delegation-deployments@npm:0.12.0"
+  checksum: 148f04f6102bc0d542aaa5c4ec40059b64a41574013c7c5059e36f2724f83ecb7df39028efd933883ac4849a6175e5d51361d9ffc790b02019069a8a6b27783f
+  languageName: node
+  linkType: hard
+
+"@metamask/delegation-toolkit@npm:^0.13.0":
+  version: 0.13.0
+  resolution: "@metamask/delegation-toolkit@npm:0.13.0"
+  dependencies:
+    "@metamask/7715-permission-types": ^0.3.0
+    "@metamask/delegation-abis": ^0.11.0
+    "@metamask/delegation-core": ^0.2.0
+    "@metamask/delegation-deployments": ^0.12.0
+    buffer: ^6.0.3
+    webauthn-p256: ^0.0.10
+  peerDependencies:
+    viem: ^2.31.4
+  checksum: 62244f88cf806eb54229390c13a3dddce05769ff1b52594cab7b3f4a3cc86fab785853aece165e73adf657b7064319488902765f9846a46c8c511e6d3f4ec245
+  languageName: node
+  linkType: hard
+
 "@metamask/eth-json-rpc-provider@npm:^1.0.0":
   version: 1.0.1
   resolution: "@metamask/eth-json-rpc-provider@npm:1.0.1"
@@ -2147,7 +2205,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@metamask/utils@npm:^11.0.1":
+"@metamask/utils@npm:^11.0.1, @metamask/utils@npm:^11.4.0":
   version: 11.8.1
   resolution: "@metamask/utils@npm:11.8.1"
   dependencies:
@@ -2453,7 +2511,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@noble/curves@npm:^1.6.0, @noble/curves@npm:^1.9.1, @noble/curves@npm:^1.9.7, @noble/curves@npm:~1.9.0":
+"@noble/curves@npm:^1.4.0, @noble/curves@npm:^1.6.0, @noble/curves@npm:^1.9.1, @noble/curves@npm:^1.9.7, @noble/curves@npm:~1.9.0":
   version: 1.9.7
   resolution: "@noble/curves@npm:1.9.7"
   dependencies:
@@ -3548,6 +3606,7 @@ __metadata:
   resolution: "@se-2/nextjs@workspace:packages/nextjs"
   dependencies:
     "@heroicons/react": ~2.1.5
+    "@metamask/delegation-toolkit": ^0.13.0
     "@rainbow-me/rainbowkit": 2.2.8
     "@tailwindcss/postcss": 4.0.15
     "@tanstack/react-query": ~5.59.15
@@ -3570,7 +3629,7 @@ __metadata:
     next: ~15.2.3
     next-nprogress-bar: ~2.3.13
     next-themes: ~0.3.0
-    permissionless: ^0.1.0
+    permissionless: ^0.2.24
     postcss: ~8.4.45
     prettier: ~3.5.3
     qrcode.react: ~4.0.1
@@ -13815,12 +13874,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"permissionless@npm:^0.1.0":
-  version: 0.1.49
-  resolution: "permissionless@npm:0.1.49"
+"permissionless@npm:^0.2.24":
+  version: 0.2.57
+  resolution: "permissionless@npm:0.2.57"
   peerDependencies:
-    viem: ">=2.14.1 <2.18.0"
-  checksum: 0eb3df8987958a54d30134f9862bbfa9eff75d72a026a681b797beae56c8a75912715da86e934d8daaa1ded9ed2b8a3b35baacf3e9e8c1e906bcf5de0df260b4
+    ox: ^0.8.0
+    viem: ^2.28.1
+  peerDependenciesMeta:
+    ox:
+      optional: true
+  checksum: f1d6b9577404a9ff6096b59d51a4fb410157bc8480d7d7f348803e05be4ed8799765a945ce9e6b0917e61a46b4c4b9287a51fbc4fe126c6dbbc33de7cd53abec
   languageName: node
   linkType: hard
 
@@ -17260,6 +17323,16 @@ __metadata:
     randombytes: ^2.1.0
     utf8: 3.0.0
   checksum: a1535817a4653f1b5cc868aa19305158122379078a41e13642e1ba64803f6f8e5dd2fb8c45c033612b8f52dde42d8008afce85296c0608276fe1513dece66a49
+  languageName: node
+  linkType: hard
+
+"webauthn-p256@npm:^0.0.10":
+  version: 0.0.10
+  resolution: "webauthn-p256@npm:0.0.10"
+  dependencies:
+    "@noble/curves": ^1.4.0
+    "@noble/hashes": ^1.4.0
+  checksum: 0648a3d78451bfa7105b5151a34bd685ee60e193be9be1981fe73819ed5a92f410973bdeb72427ef03c8c2a848619f818cf3e66b94012d5127b462cb10c24f5d
   languageName: node
   linkType: hard
 

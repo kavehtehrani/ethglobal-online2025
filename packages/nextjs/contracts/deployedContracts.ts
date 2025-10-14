@@ -389,6 +389,42 @@ const deployedContracts = {
       deployedOnBlock: 3,
     },
   },
+  11155111: {
+    SimpleAccount: {
+      address: "0x57192C5A0F4c44Aeb0208569345A7939a8c65578",
+      abi: [
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "target",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "value",
+              type: "uint256",
+            },
+            {
+              internalType: "bytes",
+              name: "data",
+              type: "bytes",
+            },
+          ],
+          name: "execute",
+          outputs: [],
+          stateMutability: "payable",
+          type: "function",
+        },
+        {
+          stateMutability: "payable",
+          type: "receive",
+        },
+      ],
+      inheritedFunctions: {},
+      deployedOnBlock: 9405683,
+    },
+  },
 } as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

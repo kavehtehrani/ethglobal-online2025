@@ -1,0 +1,79 @@
+{
+  "address": "0x57192C5A0F4c44Aeb0208569345A7939a8c65578",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "target",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "execute",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "transactionHash": "0x5ae73c78271cbba81e2e740b47ff31eb6cf9d13d33af5c1415fbd69de8e3fc2f",
+  "receipt": {
+    "to": null,
+    "from": "0xe6DdDcbb2848983D9cAaB715611849E579759CB0",
+    "contractAddress": "0x57192C5A0F4c44Aeb0208569345A7939a8c65578",
+    "transactionIndex": 150,
+    "gasUsed": "155409",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x84f22f76b5618b02bcd8726e19c17bb2a37516783baca6183ffde0f76b067216",
+    "transactionHash": "0x5ae73c78271cbba81e2e740b47ff31eb6cf9d13d33af5c1415fbd69de8e3fc2f",
+    "logs": [],
+    "blockNumber": 9405683,
+    "cumulativeGasUsed": "17066487",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "98fb9c4c8da47bfd58d195df4fe3156b",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"target\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"execute\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"details\":\"Minimal EIP-7702 compatible account implementation Allows EOAs to delegate execution to this contract via EIP-7702\",\"kind\":\"dev\",\"methods\":{\"execute(address,uint256,bytes)\":{\"details\":\"Execute a call on behalf of the account\",\"params\":{\"data\":\"Calldata to send\",\"target\":\"Target contract address\",\"value\":\"ETH value to send\"}}},\"title\":\"SimpleAccount\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/SimpleAccount.sol\":\"SimpleAccount\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/SimpleAccount.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.19;\\n\\n/**\\n * @title SimpleAccount\\n * @dev Minimal EIP-7702 compatible account implementation\\n * Allows EOAs to delegate execution to this contract via EIP-7702\\n */\\ncontract SimpleAccount {\\n    /**\\n     * @dev Execute a call on behalf of the account\\n     * @param target Target contract address\\n     * @param value ETH value to send\\n     * @param data Calldata to send\\n     */\\n    function execute(address target, uint256 value, bytes calldata data) external payable {\\n        (bool success, ) = target.call{ value: value }(data);\\n        require(success, \\\"SimpleAccount: execution failed\\\");\\n    }\\n\\n    /**\\n     * @dev Receive ETH\\n     */\\n    receive() external payable {}\\n}\\n\",\"keccak256\":\"0xbdaf676561a15b538405f272571108696d2196836ef5eb10ac0aa995f8351879\",\"license\":\"MIT\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506101d9806100206000396000f3fe6080604052600436106100225760003560e01c8063b61d27f61461002e57600080fd5b3661002957005b600080fd5b61004161003c3660046100fe565b610043565b005b6000846001600160a01b0316848484604051610060929190610193565b60006040518083038185875af1925050503d806000811461009d576040519150601f19603f3d011682016040523d82523d6000602084013e6100a2565b606091505b50509050806100f75760405162461bcd60e51b815260206004820152601f60248201527f53696d706c654163636f756e743a20657865637574696f6e206661696c656400604482015260640160405180910390fd5b5050505050565b6000806000806060858703121561011457600080fd5b84356001600160a01b038116811461012b57600080fd5b935060208501359250604085013567ffffffffffffffff8082111561014f57600080fd5b818701915087601f83011261016357600080fd5b81358181111561017257600080fd5b88602082850101111561018457600080fd5b95989497505060200194505050565b818382376000910190815291905056fea2646970667358221220efdfd3fb0b71d3b16906eff9432feb96979acdf34a4fb33bbf38757aa921c3df64736f6c63430008140033",
+  "deployedBytecode": "0x6080604052600436106100225760003560e01c8063b61d27f61461002e57600080fd5b3661002957005b600080fd5b61004161003c3660046100fe565b610043565b005b6000846001600160a01b0316848484604051610060929190610193565b60006040518083038185875af1925050503d806000811461009d576040519150601f19603f3d011682016040523d82523d6000602084013e6100a2565b606091505b50509050806100f75760405162461bcd60e51b815260206004820152601f60248201527f53696d706c654163636f756e743a20657865637574696f6e206661696c656400604482015260640160405180910390fd5b5050505050565b6000806000806060858703121561011457600080fd5b84356001600160a01b038116811461012b57600080fd5b935060208501359250604085013567ffffffffffffffff8082111561014f57600080fd5b818701915087601f83011261016357600080fd5b81358181111561017257600080fd5b88602082850101111561018457600080fd5b95989497505060200194505050565b818382376000910190815291905056fea2646970667358221220efdfd3fb0b71d3b16906eff9432feb96979acdf34a4fb33bbf38757aa921c3df64736f6c63430008140033",
+  "devdoc": {
+    "details": "Minimal EIP-7702 compatible account implementation Allows EOAs to delegate execution to this contract via EIP-7702",
+    "kind": "dev",
+    "methods": {
+      "execute(address,uint256,bytes)": {
+        "details": "Execute a call on behalf of the account",
+        "params": {
+          "data": "Calldata to send",
+          "target": "Target contract address",
+          "value": "ETH value to send"
+        }
+      }
+    },
+    "title": "SimpleAccount",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}
