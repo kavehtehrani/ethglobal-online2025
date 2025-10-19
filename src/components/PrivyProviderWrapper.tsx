@@ -3,12 +3,14 @@
 import { ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PrivyProviderWrapperProps {
   children: ReactNode;
 }
 
 export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
+  const { theme } = useTheme();
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
   if (!appId) {
@@ -26,6 +28,7 @@ export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
       noPromptOnSignature: false,
     },
     loginMethods: ["email", "wallet"],
+    theme: theme,
   });
 
   return (
@@ -41,7 +44,7 @@ export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
         supportedChains: [sepolia],
         loginMethods: ["email", "wallet"],
         appearance: {
-          theme: "dark",
+          theme: theme,
           accentColor: "#676fff",
         },
       }}

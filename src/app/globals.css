@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Default dark theme values */
   --background: #0a0a0a;
   --foreground: #ededed;
   --card-bg: #1a1a1a;
@@ -12,6 +13,16 @@
   --warning: #f59e0b;
   --text-muted: #9ca3af;
   --text-secondary: #6b7280;
+}
+
+/* Light theme variables (will be applied via JavaScript) */
+[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+  --card-bg: #f9fafb;
+  --card-border: #e5e7eb;
+  --text-muted: #6b7280;
+  --text-secondary: #9ca3af;
 }
 
 @theme inline {

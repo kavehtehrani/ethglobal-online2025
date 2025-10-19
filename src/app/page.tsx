@@ -16,6 +16,7 @@ import {
   testBasicPYUSDTransfer,
 } from "@/lib/basicPrivyTest";
 import { notification } from "@/lib/notifications";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
@@ -371,15 +372,23 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] py-6">
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
-            🚀 Gasless PYUSD Payments
-          </h1>
-          <p className="text-lg text-[var(--text-muted)] font-medium">
-            EIP-7702 + Pimlico + Privy
-          </p>
-          <p className="text-[var(--text-secondary)] mt-1">
-            Send PYUSD on Sepolia without paying gas fees!
-          </p>
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1"></div>
+            <div className="flex-1 text-center">
+              <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
+                🚀 Gasless PYUSD Payments
+              </h1>
+              <p className="text-lg text-[var(--text-muted)] font-medium">
+                EIP-7702 + Pimlico + Privy
+              </p>
+              <p className="text-[var(--text-secondary)] mt-1">
+                Send PYUSD on Sepolia without paying gas fees!
+              </p>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
 
         {/* Privy Authentication */}
