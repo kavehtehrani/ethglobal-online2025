@@ -9,7 +9,7 @@ import {
 } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
 import { createPublicClient, http, formatUnits } from "viem";
-import { CONTRACTS, DEFAULT_TEST_VALUES, RPC_ENDPOINTS } from "@/lib/constants";
+import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
 import { executePrivyGaslessPayment } from "@/lib/privyGaslessPayment";
 import {
   testBasicPrivyTransaction,
@@ -19,7 +19,12 @@ import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getTransactionLink, getAddressLink } from "@/lib/explorer";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { isAddress } from "viem";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
@@ -27,7 +32,9 @@ export default function Home() {
   const { signAuthorization } = useSign7702Authorization();
   const { createWallet } = useCreateWallet();
 
-  const [recipient, setRecipient] = useState<`0x${string}`>("" as `0x${string}`);
+  const [recipient, setRecipient] = useState<`0x${string}`>(
+    "" as `0x${string}`
+  );
   const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
@@ -295,7 +302,7 @@ export default function Home() {
     setTransactionStatus({
       isProcessing: true,
       type: "Test Gasless PYUSD Transfer",
-      message: "Sending 1 PYUSD (gasless test)...",
+      message: `Sending 1 PYUSD (gasless test) to ${recipient}...`,
       error: null,
     });
     setIsLoading(true);
@@ -381,7 +388,7 @@ export default function Home() {
     setTransactionStatus({
       isProcessing: true,
       type: "Gasless PYUSD Payment",
-      message: `Sending ${amount} PYUSD (gasless)...`,
+      message: `Sending ${amount} PYUSD (gasless) to ${recipient}...`,
       error: null,
     });
     setIsLoading(true);
@@ -438,19 +445,16 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-4">
         <div className="text-center mb-6">
           <div className="flex justify-between items-start mb-4">
-            <div className="flex-1"></div>
+            <div className="w-16"></div>
             <div className="flex-1 text-center">
               <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
                 🚀 Gasless PYUSD Payments
               </h1>
-              <p className="text-lg text-[var(--text-muted)] font-medium">
-                EIP-7702 + Pimlico + Privy
-              </p>
               <p className="text-[var(--text-secondary)] mt-1">
                 Send PYUSD on Sepolia without paying gas fees!
               </p>
             </div>
-            <div className="flex-1 flex justify-end">
+            <div className="w-16 flex justify-end">
               <ThemeToggle />
             </div>
           </div>
@@ -710,20 +714,37 @@ export default function Home() {
             Send PYUSD (Gasless)
           </h2>
           <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                Recipient Address
-              </label>
-              <input
-                type="text"
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value as `0x${string}`)}
-                placeholder="Enter recipient address"
-                className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-              />
-            </div>
-            <div className="flex gap-3">
+            {/* Desktop: Single row layout */}
+            <div className="hidden lg:flex gap-4 items-end">
               <div className="flex-1">
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Recipient Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={recipient}
+                    onChange={(e) =>
+                      setRecipient(e.target.value as `0x${string}`)
+                    }
+                    placeholder="Enter recipient address"
+                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                      recipient && isAddress(recipient)
+                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : recipient && !isAddress(recipient)
+                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                    }`}
+                  />
+                  {recipient && isAddress(recipient) && (
+                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                  )}
+                  {recipient && !isAddress(recipient) && (
+                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                  )}
+                </div>
+              </div>
+              <div className="w-48">
                 <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
                   Amount (PYUSD)
                 </label>
@@ -731,11 +752,66 @@ export default function Home() {
                   type="text"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount"
+                  placeholder="Enter amount (PYUSD)"
                   className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
                 />
               </div>
-              <div className="flex items-end">
+              <button
+                className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+                onClick={handleGaslessPayment}
+                disabled={isLoading || !authenticated}
+              >
+                {isLoading
+                  ? "Processing..."
+                  : !authenticated
+                  ? "Login First"
+                  : "Send PYUSD"}
+              </button>
+            </div>
+
+            {/* Mobile/Tablet: Two row layout */}
+            <div className="lg:hidden space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Recipient Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={recipient}
+                    onChange={(e) =>
+                      setRecipient(e.target.value as `0x${string}`)
+                    }
+                    placeholder="Enter recipient address"
+                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                      recipient && isAddress(recipient)
+                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : recipient && !isAddress(recipient)
+                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                    }`}
+                  />
+                  {recipient && isAddress(recipient) && (
+                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                  )}
+                  {recipient && !isAddress(recipient) && (
+                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Amount (PYUSD)
+                  </label>
+                  <input
+                    type="text"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Enter amount (PYUSD)"
+                    className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
+                  />
+                </div>
                 <button
                   className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
                   onClick={handleGaslessPayment}
@@ -757,7 +833,7 @@ export default function Home() {
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
-                Gasless PYUSD Payments Explained
+                Gasless PYUSD Payments Explained: EIP-7702 + Pimlico + Privy
               </h3>
               <div className="space-y-3 text-sm text-[var(--text-muted)]">
                 <div className="flex items-start gap-2">
