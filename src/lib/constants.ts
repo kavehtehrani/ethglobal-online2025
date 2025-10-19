@@ -1,17 +1,20 @@
 // Network configuration
 export const SEPOLIA_CHAIN_ID = 11155111;
+export const FEE_RECEIVER_ADDRESS =
+  "0xe6DdDcbb2848983D9cAaB715611849E579759CB0" as `0x${string}`;
 
 // Contract addresses on Sepolia
 export const CONTRACTS = {
   // Official PYUSD contract on Sepolia (checksummed)
   PYUSD: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9" as `0x${string}`,
 
-  // Our deployed SimpleAccount contract on Sepolia
-  SIMPLE_ACCOUNT: "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
+  // Our deployed GaslessPaymentAccount contract on Sepolia
+  GASLESS_PAYMENT_ACCOUNT:
+    "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
 
-  // EIP-7702 SimpleAccount implementation address (must have bytecode on Sepolia).
+  // EIP-7702 GaslessPaymentAccount implementation address (must have bytecode on Sepolia).
   // Prefer setting NEXT_PUBLIC_7702_IMPLEMENTATION in .env.local to your chosen implementation.
-  SIMPLE_ACCOUNT_IMPLEMENTATION:
+  GASLESS_PAYMENT_ACCOUNT_IMPLEMENTATION:
     (process.env.NEXT_PUBLIC_7702_IMPLEMENTATION as `0x${string}`) ||
     ("0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`),
 

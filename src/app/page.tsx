@@ -197,7 +197,10 @@ export default function Home() {
 
     try {
       const result = await testBasicPrivyTransaction({
-        privySendTransaction: sendTransaction,
+        privySendTransaction: async (tx: any) => {
+          const result = await sendTransaction(tx);
+          return result.hash;
+        },
         walletAddress: privyWallet.address as `0x${string}`,
         recipientAddress: recipient,
         amount: "0.001", // Small test amount
@@ -263,7 +266,10 @@ export default function Home() {
 
     try {
       const result = await testBasicPYUSDTransfer({
-        privySendTransaction: sendTransaction,
+        privySendTransaction: async (tx: any) => {
+          const result = await sendTransaction(tx);
+          return result.hash;
+        },
         walletAddress: privyWallet.address as `0x${string}`,
         recipientAddress: recipient,
         amount: "1", // 1 PYUSD test
@@ -331,8 +337,23 @@ export default function Home() {
       const result = await executePrivyGaslessPayment({
         recipientAddress: recipient, // Use the same recipient as the main form
         amount: "1", // 1 PYUSD test
-        privyWallet,
-        signAuthorization,
+        privyWallet: {
+          address: privyWallet.address as `0x${string}`,
+          getEthereumProvider: privyWallet.getEthereumProvider,
+        },
+        signAuthorization: async (auth: {
+          contractAddress: string;
+          chainId: number;
+          nonce: number;
+        }) => {
+          const result = await signAuthorization({
+            contractAddress: auth.contractAddress as `0x${string}`,
+            chainId: auth.chainId,
+            nonce: auth.nonce,
+          });
+          // Convert the signature result to a string if needed
+          return typeof result === "string" ? result : JSON.stringify(result);
+        },
       });
 
       if (result.success) {
@@ -416,9 +437,19 @@ export default function Home() {
     try {
       const result = await executePrivyGaslessPayment({
         recipientAddress: recipient,
-        amount,
-        privyWallet,
-        signAuthorization,
+        amount: amount,
+        privyWallet: privyWallet as {
+          address: `0x${string}`;
+          getEthereumProvider: () => Promise<unknown>;
+        },
+        signAuthorization: async (auth) => {
+          const result = await signAuthorization({
+            contractAddress: auth.contractAddress as `0x${string}`,
+            chainId: auth.chainId,
+            nonce: auth.nonce,
+          });
+          return result as unknown as string;
+        },
       });
 
       if (result.success) {
@@ -426,8 +457,8 @@ export default function Home() {
           hash: result.txHash,
           type: "Gasless PYUSD Payment",
           amount: result.amount,
-          token: result.token,
-          to: result.to,
+          token: "PYUSD",
+          to: recipient,
         });
         setTransactionStatus({
           isProcessing: false,
@@ -435,26 +466,36 @@ export default function Home() {
           message: "Transaction Successful",
           error: null,
         });
+
         notification.success(
-          `Gasless payment successful! Sent ${result.amount} ${result.token} to ${result.to}`,
+          `Payment successful! Sent ${amount} PYUSD to ${recipient}`,
           result.txHash
         );
+
         // Refresh balances after successful payment
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
         }
+      } else {
+        setTransactionStatus({
+          isProcessing: false,
+          type: "Gasless PYUSD Payment",
+          message: "",
+          error: "Payment failed",
+        });
+        notification.error("Payment failed");
       }
     } catch (error) {
       console.error("Gasless payment error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
       setTransactionStatus({
         isProcessing: false,
         type: "Gasless PYUSD Payment",
         message: "",
-        error: `Payment failed: ${errorMessage}`,
+        error: error instanceof Error ? error.message : "Payment failed",
       });
-      notification.error(`Gasless payment failed: ${errorMessage}`);
+      notification.error(
+        error instanceof Error ? error.message : "Payment failed"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -812,6 +853,11 @@ export default function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Tier Status and Transaction History */}
+        {authenticated && privyWallet && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6"></div>
         )}
 
         {/* Gasless Payment - Main Feature */}
