@@ -40,6 +40,17 @@ export default function Home() {
     token: string;
     to: string;
   } | null>(null);
+  const [transactionStatus, setTransactionStatus] = useState<{
+    isProcessing: boolean;
+    type: string;
+    message: string;
+    error: string | null;
+  }>({
+    isProcessing: false,
+    type: "",
+    message: "",
+    error: null,
+  });
 
   // Get the embedded wallet or any Privy wallet
   const embeddedWallet = wallets.find(
@@ -140,11 +151,23 @@ export default function Home() {
 
   const handleTestBasicETHTransfer = async () => {
     if (!privyWallet || !sendTransaction) {
-      notification.error("Privy wallet or sendTransaction not available");
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Privy wallet or sendTransaction not available",
+      });
       return;
     }
 
+    setTransactionStatus({
+      isProcessing: true,
+      type: "Basic ETH Transfer",
+      message: "Sending 0.001 ETH...",
+      error: null,
+    });
     setIsLoading(true);
+
     try {
       const result = await testBasicPrivyTransaction({
         privySendTransaction: sendTransaction,
@@ -161,6 +184,12 @@ export default function Home() {
           token: "ETH",
           to: result.to,
         });
+        setTransactionStatus({
+          isProcessing: false,
+          type: "Basic ETH Transfer",
+          message: `Successfully sent ${result.amount} ETH to ${result.to}`,
+          error: null,
+        });
         notification.success(
           `Basic ETH transfer successful! Sent ${result.amount} ETH to ${result.to}`,
           result.txHash
@@ -172,11 +201,15 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Basic ETH transfer error:", error);
-      notification.error(
-        `Basic ETH transfer failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setTransactionStatus({
+        isProcessing: false,
+        type: "Basic ETH Transfer",
+        message: "",
+        error: `Transfer failed: ${errorMessage}`,
+      });
+      notification.error(`Basic ETH transfer failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -184,11 +217,23 @@ export default function Home() {
 
   const handleTestBasicPYUSDTransfer = async () => {
     if (!privyWallet || !sendTransaction) {
-      notification.error("Privy wallet or sendTransaction not available");
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Privy wallet or sendTransaction not available",
+      });
       return;
     }
 
+    setTransactionStatus({
+      isProcessing: true,
+      type: "Basic PYUSD Transfer",
+      message: "Sending 1 PYUSD...",
+      error: null,
+    });
     setIsLoading(true);
+
     try {
       const result = await testBasicPYUSDTransfer({
         privySendTransaction: sendTransaction,
@@ -205,6 +250,12 @@ export default function Home() {
           token: "PYUSD",
           to: result.to,
         });
+        setTransactionStatus({
+          isProcessing: false,
+          type: "Basic PYUSD Transfer",
+          message: `Successfully sent ${result.amount} PYUSD to ${result.to}`,
+          error: null,
+        });
         notification.success(
           `Basic PYUSD transfer successful! Sent ${result.amount} PYUSD to ${result.to}`,
           result.txHash
@@ -216,11 +267,15 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Basic PYUSD transfer error:", error);
-      notification.error(
-        `Basic PYUSD transfer failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setTransactionStatus({
+        isProcessing: false,
+        type: "Basic PYUSD Transfer",
+        message: "",
+        error: `Transfer failed: ${errorMessage}`,
+      });
+      notification.error(`Basic PYUSD transfer failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -228,21 +283,43 @@ export default function Home() {
 
   const handleGaslessPayment = async () => {
     if (!recipient || !amount) {
-      notification.error("Please fill in all fields");
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Please fill in all fields",
+      });
       return;
     }
 
     if (!privyWallet) {
-      notification.error("Privy wallet not available");
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Privy wallet not available",
+      });
       return;
     }
 
     if (!signAuthorization) {
-      notification.error("EIP-7702 signing not available");
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "EIP-7702 signing not available",
+      });
       return;
     }
 
+    setTransactionStatus({
+      isProcessing: true,
+      type: "Gasless PYUSD Payment",
+      message: `Sending ${amount} PYUSD (gasless)...`,
+      error: null,
+    });
     setIsLoading(true);
+
     try {
       const result = await executePrivyGaslessPayment({
         recipientAddress: recipient,
@@ -259,6 +336,12 @@ export default function Home() {
           token: result.token,
           to: result.to,
         });
+        setTransactionStatus({
+          isProcessing: false,
+          type: "Gasless PYUSD Payment",
+          message: `Successfully sent ${result.amount} ${result.token} to ${result.to}`,
+          error: null,
+        });
         notification.success(
           `Gasless payment successful! Sent ${result.amount} ${result.token} to ${result.to}`,
           result.txHash
@@ -270,11 +353,15 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Gasless payment error:", error);
-      notification.error(
-        `Gasless payment failed: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setTransactionStatus({
+        isProcessing: false,
+        type: "Gasless PYUSD Payment",
+        message: "",
+        error: `Payment failed: ${errorMessage}`,
+      });
+      notification.error(`Gasless payment failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -435,6 +522,63 @@ export default function Home() {
                 {privyWallet.address}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Transaction Status */}
+        {(transactionStatus.isProcessing ||
+          transactionStatus.error ||
+          transactionStatus.message) && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              📊 Transaction Status
+            </h2>
+
+            {transactionStatus.isProcessing && (
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900">
+                      {transactionStatus.type}
+                    </h3>
+                    <p className="text-blue-800">{transactionStatus.message}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {transactionStatus.error && (
+              <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+                <div className="flex items-center space-x-3">
+                  <div className="text-red-600 text-xl">❌</div>
+                  <div>
+                    <h3 className="font-semibold text-red-900">
+                      Transaction Failed
+                    </h3>
+                    <p className="text-red-800">{transactionStatus.error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {transactionStatus.message &&
+              !transactionStatus.isProcessing &&
+              !transactionStatus.error && (
+                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-green-600 text-xl">✅</div>
+                    <div>
+                      <h3 className="font-semibold text-green-900">
+                        Transaction Successful
+                      </h3>
+                      <p className="text-green-800">
+                        {transactionStatus.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
         )}
 
