@@ -17,6 +17,7 @@ import {
 } from "@/lib/basicPrivyTest";
 import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
@@ -282,6 +283,72 @@ export default function Home() {
     }
   };
 
+  const handleTestGaslessPYUSDTransfer = async () => {
+    if (!privyWallet || !signAuthorization) {
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Privy wallet or EIP-7702 signing not available",
+      });
+      return;
+    }
+
+    setTransactionStatus({
+      isProcessing: true,
+      type: "Test Gasless PYUSD Transfer",
+      message: "Sending 1 PYUSD (gasless test)...",
+      error: null,
+    });
+    setIsLoading(true);
+
+    try {
+      const result = await executePrivyGaslessPayment({
+        recipientAddress: recipient, // Use the same recipient as the main form
+        amount: "1", // 1 PYUSD test
+        privyWallet,
+        signAuthorization,
+      });
+
+      if (result.success) {
+        setLastTransaction({
+          hash: result.txHash,
+          type: "Test Gasless PYUSD Transfer",
+          amount: result.amount,
+          token: result.token,
+          to: result.to,
+        });
+        setTransactionStatus({
+          isProcessing: false,
+          type: "Test Gasless PYUSD Transfer",
+          message: `Successfully sent ${result.amount} ${result.token} to ${result.to}`,
+          error: null,
+        });
+        notification.success(
+          `Test gasless PYUSD transfer successful! Sent ${result.amount} ${result.token} to ${result.to}`,
+          result.txHash
+        );
+        // Refresh balances after successful transaction
+        if (privyWallet?.address) {
+          fetchBalances(privyWallet.address as `0x${string}`);
+        }
+      }
+    } catch (error) {
+      console.error("Test gasless PYUSD transfer error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setTransactionStatus({
+        isProcessing: false,
+        type: "Test Gasless PYUSD Transfer",
+        message: "",
+        error: `Transfer failed: ${errorMessage}`,
+      });
+      notification.error(`Test gasless PYUSD transfer failed: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGaslessPayment = async () => {
     if (!recipient || !amount) {
       setTransactionStatus({
@@ -433,6 +500,24 @@ export default function Home() {
               </button>
             </div>
           )}
+          {authenticated && privyWallet && (
+            <div className="mt-3 pt-3 border-t border-[var(--card-border)]">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[var(--text-muted)]">
+                  Wallet Address:
+                </span>
+                <a
+                  href={`https://sepolia.blockscout.com/address/${privyWallet.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors"
+                >
+                  {privyWallet.address.slice(0, 6)}...
+                  {privyWallet.address.slice(-4)}
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Balance Display */}
@@ -515,30 +600,22 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            {/* Wallet Address */}
-            <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-              <p className="text-sm text-[var(--text-muted)] mb-1">
-                Wallet Address:
-              </p>
-              <p className="font-mono text-sm text-[var(--foreground)] break-all">
-                {privyWallet.address}
-              </p>
-            </div>
           </div>
         )}
 
-        {/* Transaction Status */}
+        {/* Transaction Status & History */}
         {(transactionStatus.isProcessing ||
           transactionStatus.error ||
-          transactionStatus.message) && (
+          transactionStatus.message ||
+          lastTransaction) && (
           <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
             <h2 className="text-xl font-bold text-[var(--foreground)] mb-3">
               📊 Transaction Status
             </h2>
 
+            {/* Current Transaction Status */}
             {transactionStatus.isProcessing && (
-              <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg">
+              <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
                   <div>
@@ -554,7 +631,7 @@ export default function Home() {
             )}
 
             {transactionStatus.error && (
-              <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg">
+              <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="text-[var(--error)] text-xl">❌</div>
                   <div>
@@ -572,7 +649,7 @@ export default function Home() {
             {transactionStatus.message &&
               !transactionStatus.isProcessing &&
               !transactionStatus.error && (
-                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
+                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg mb-4">
                   <div className="flex items-center space-x-3">
                     <div className="text-[var(--success)] text-xl">✅</div>
                     <div>
@@ -586,167 +663,70 @@ export default function Home() {
                   </div>
                 </div>
               )}
-          </div>
-        )}
 
-        {/* Last Transaction Display */}
-        {lastTransaction && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-            <h2 className="text-xl font-bold text-[var(--foreground)] mb-3">
-              🎉 Last Transaction
-            </h2>
-            <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--foreground)]">
-                    Type:
-                  </span>
-                  <span className="text-[var(--text-muted)]">
-                    {lastTransaction.type}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--foreground)]">
-                    Amount:
-                  </span>
-                  <span className="text-[var(--text-muted)]">
-                    {lastTransaction.amount} {lastTransaction.token}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--foreground)]">
-                    To:
-                  </span>
-                  <span className="text-[var(--text-muted)] font-mono text-sm">
-                    {lastTransaction.to}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--foreground)]">
-                    Transaction Hash:
-                  </span>
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${lastTransaction.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline"
-                  >
-                    {lastTransaction.hash.slice(0, 10)}...
-                    {lastTransaction.hash.slice(-8)}
-                  </a>
-                </div>
-                <div className="pt-2">
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${lastTransaction.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-                  >
-                    🔗 View on Etherscan
-                  </a>
+            {/* Last Transaction Details */}
+            {lastTransaction && (
+              <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
+                <h3 className="font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
+                  🎉 Last Transaction
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--foreground)]">
+                      Type:
+                    </span>
+                    <span className="text-[var(--text-muted)]">
+                      {lastTransaction.type}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--foreground)]">
+                      Amount:
+                    </span>
+                    <span className="text-[var(--text-muted)]">
+                      {lastTransaction.amount} {lastTransaction.token}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--foreground)]">
+                      To:
+                    </span>
+                    <span className="text-[var(--text-muted)] font-mono text-sm">
+                      {lastTransaction.to}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--foreground)]">
+                      Transaction Hash:
+                    </span>
+                    <a
+                      href={`https://eth-sepolia.blockscout.com/tx/${lastTransaction.hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline"
+                    >
+                      {lastTransaction.hash.slice(0, 10)}...
+                      {lastTransaction.hash.slice(-8)}
+                    </a>
+                  </div>
+                  <div className="pt-2">
+                    <a
+                      href={`https://eth-sepolia.blockscout.com/tx/${lastTransaction.hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+                    >
+                      🔗 View on Blockscout
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
-        {/* Basic Transaction Tests */}
+        {/* Gasless Payment - Main Feature */}
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-          <h2 className="text-xl font-bold mb-3 text-[var(--foreground)]">
-            🧪 Basic Transaction Tests
-          </h2>
-          <p className="text-[var(--text-muted)] mb-3">
-            Test if Privy can send basic transactions before trying gasless
-            payments
-          </p>
-          <div className="flex gap-3 flex-wrap mb-3">
-            <button
-              className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
-              onClick={handleTestBasicETHTransfer}
-              disabled={isLoading || !privyWallet}
-            >
-              {isLoading ? "Testing..." : "Test ETH Transfer (0.001 ETH)"}
-            </button>
-            <button
-              className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
-              onClick={handleTestBasicPYUSDTransfer}
-              disabled={isLoading || !privyWallet}
-            >
-              {isLoading ? "Testing..." : "Test PYUSD Transfer (1 PYUSD)"}
-            </button>
-          </div>
-          <div className="text-sm text-[var(--text-secondary)]">
-            <p>✅ These tests use regular transactions (you pay gas fees)</p>
-            <p>✅ If these work, Privy wallet is functioning correctly</p>
-            <p>✅ If these fail, there&apos;s a basic Privy setup issue</p>
-          </div>
-
-          {/* Debug Information */}
-          <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-            <h4 className="font-bold mb-2 text-[var(--foreground)]">
-              🔍 Debug Information
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <div className="space-y-1">
-                <div className="flex justify-between">
-                  <span className="font-medium">Privy Ready:</span>
-                  <span
-                    className={
-                      ready ? "text-[var(--success)]" : "text-[var(--error)]"
-                    }
-                  >
-                    {ready ? "✅ Yes" : "❌ No"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Authenticated:</span>
-                  <span
-                    className={
-                      authenticated
-                        ? "text-[var(--success)]"
-                        : "text-[var(--error)]"
-                    }
-                  >
-                    {authenticated ? "✅ Yes" : "❌ No"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">EIP-7702 Support:</span>
-                  <span
-                    className={
-                      !!signAuthorization
-                        ? "text-[var(--success)]"
-                        : "text-[var(--error)]"
-                    }
-                  >
-                    {!!signAuthorization ? "✅ Yes" : "❌ No"}
-                  </span>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between">
-                  <span className="font-medium">Wallets Count:</span>
-                  <span className="text-[var(--accent)]">{wallets.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Network:</span>
-                  <span className="text-[var(--accent)]">
-                    {sepolia.name} (ID: {sepolia.id})
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Wallet Address:</span>
-                  <span className="text-[var(--warning)] font-mono text-xs">
-                    {privyWallet?.address || "None"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Gasless Payment */}
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
           <h2 className="text-xl font-bold mb-3 text-[var(--foreground)]">
             Send PYUSD (Gasless)
           </h2>
@@ -791,80 +771,280 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="mt-3 text-sm text-[var(--text-muted)]">
-            <p>✅ Uses EIP-7702 to make your EOA act as a smart account</p>
-            <p>✅ Pimlico sponsors the gas fees</p>
-            <p>✅ Real PYUSD transactions on Sepolia</p>
-            <p>🔧 Secure embedded wallet with native EIP-7702 support</p>
-          </div>
+        </div>
 
-          {/* Gasless Payment Status */}
-          <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-            <h4 className="font-bold mb-2 text-[var(--foreground)]">
-              🚀 Gasless Payment Status
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--text-muted)]">
-                    EIP-7702 Support:
-                  </span>
-                  <span
-                    className={
-                      !!signAuthorization
-                        ? "text-[var(--success)]"
-                        : "text-[var(--error)]"
-                    }
-                  >
-                    {!!signAuthorization ? "✅ Available" : "❌ Not Available"}
-                  </span>
+        {/* How does this work? */}
+        <CollapsibleSection title="How does this work?" icon="❓">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
+                Gasless PYUSD Payments Explained
+              </h3>
+              <div className="space-y-3 text-sm text-[var(--text-muted)]">
+                <div className="flex items-start gap-2">
+                  <span className="text-[var(--accent)]">✅</span>
+                  <div>
+                    <strong className="text-[var(--foreground)]">
+                      EIP-7702 Smart Account:
+                    </strong>{" "}
+                    Your regular wallet (EOA) temporarily acts as a smart
+                    account, enabling advanced features without changing your
+                    wallet address.
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--text-muted)]">
-                    Pimlico API Key:
-                  </span>
-                  <span
-                    className={
-                      process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                        ? "text-[var(--success)]"
-                        : "text-[var(--error)]"
-                    }
-                  >
-                    {process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                      ? "✅ Configured"
-                      : "❌ Missing"}
-                  </span>
+                <div className="flex items-start gap-2">
+                  <span className="text-[var(--accent)]">✅</span>
+                  <div>
+                    <strong className="text-[var(--foreground)]">
+                      Pimlico Gas Sponsorship:
+                    </strong>{" "}
+                    Pimlico pays all gas fees for your transactions, so you
+                    don&apos;t need any ETH for gas.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[var(--accent)]">✅</span>
+                  <div>
+                    <strong className="text-[var(--foreground)]">
+                      Real PYUSD on Sepolia:
+                    </strong>{" "}
+                    These are actual PYUSD token transfers on the Sepolia
+                    testnet, not simulations.
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-[var(--accent)]">🔧</span>
+                  <div>
+                    <strong className="text-[var(--foreground)]">
+                      Secure Embedded Wallet:
+                    </strong>{" "}
+                    Privy&apos;s embedded wallet provides native EIP-7702
+                    support with enterprise-grade security.
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--text-muted)]">
-                    Sponsorship Policy:
-                  </span>
-                  <span
-                    className={
-                      process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                        ? "text-[var(--success)]"
-                        : "text-[var(--error)]"
-                    }
-                  >
-                    {process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                      ? "✅ Configured"
-                      : "❌ Missing"}
-                  </span>
+            </div>
+
+            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+              <h4 className="font-bold mb-2 text-[var(--foreground)]">
+                🚀 Technical Details
+              </h4>
+              <div className="text-sm text-[var(--text-muted)] space-y-2">
+                <p>
+                  <strong>EIP-7702:</strong> Ethereum Improvement Proposal that
+                  allows EOAs to delegate execution to smart contracts
+                </p>
+                <p>
+                  <strong>Pimlico:</strong> Account abstraction infrastructure
+                  provider that sponsors gas fees
+                </p>
+                <p>
+                  <strong>Privy:</strong> Web3 authentication and wallet
+                  infrastructure with embedded wallet support
+                </p>
+                <p>
+                  <strong>PYUSD:</strong> PayPal&apos;s USD-pegged stablecoin on
+                  Ethereum
+                </p>
+              </div>
+            </div>
+          </div>
+        </CollapsibleSection>
+
+        {/* Testing & Diagnostics Section */}
+        <CollapsibleSection title="Testing & Diagnostics" icon="🧪">
+          <div className="space-y-4">
+            {/* Basic Transaction Tests */}
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
+                Transaction Tests
+              </h3>
+              <p className="text-[var(--text-muted)] mb-3">
+                Test different transaction types to verify Privy wallet
+                functionality
+              </p>
+              <div className="flex gap-3 flex-wrap mb-3">
+                <button
+                  className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
+                  onClick={handleTestBasicETHTransfer}
+                  disabled={isLoading || !privyWallet}
+                >
+                  {isLoading
+                    ? "Testing..."
+                    : "Test ETH Transfer (0.001 ETH) - With Gas"}
+                </button>
+                <button
+                  className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
+                  onClick={handleTestBasicPYUSDTransfer}
+                  disabled={isLoading || !privyWallet}
+                >
+                  {isLoading
+                    ? "Testing..."
+                    : "Test PYUSD Transfer (1 PYUSD) - With Gas"}
+                </button>
+                <button
+                  className="bg-[var(--accent)] text-white px-4 py-2 rounded hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors"
+                  onClick={handleTestGaslessPYUSDTransfer}
+                  disabled={isLoading || !privyWallet || !signAuthorization}
+                >
+                  {isLoading
+                    ? "Testing..."
+                    : "Test PYUSD Transfer (1 PYUSD) - Gasless"}
+                </button>
+              </div>
+              <div className="text-sm text-[var(--text-secondary)]">
+                <p>
+                  🔵 <strong>With Gas:</strong> Regular transactions where you
+                  pay gas fees
+                </p>
+                <p>
+                  🟢 <strong>Gasless:</strong> Uses EIP-7702 + Pimlico
+                  sponsorship (no gas fees)
+                </p>
+                <p>
+                  ✅ Test with gas first to verify basic Privy functionality
+                </p>
+                <p>
+                  ✅ Test gasless to verify EIP-7702 and Pimlico integration
+                </p>
+              </div>
+            </div>
+
+            {/* Debug Information */}
+            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+              <h4 className="font-bold mb-2 text-[var(--foreground)]">
+                🔍 Debug Information
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Privy Ready:</span>
+                    <span
+                      className={
+                        ready ? "text-[var(--success)]" : "text-[var(--error)]"
+                      }
+                    >
+                      {ready ? "✅ Yes" : "❌ No"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Authenticated:</span>
+                    <span
+                      className={
+                        authenticated
+                          ? "text-[var(--success)]"
+                          : "text-[var(--error)]"
+                      }
+                    >
+                      {authenticated ? "✅ Yes" : "❌ No"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">EIP-7702 Support:</span>
+                    <span
+                      className={
+                        !!signAuthorization
+                          ? "text-[var(--success)]"
+                          : "text-[var(--error)]"
+                      }
+                    >
+                      {!!signAuthorization ? "✅ Yes" : "❌ No"}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium text-[var(--text-muted)]">
-                    Implementation:
-                  </span>
-                  <span className="text-[var(--accent)] font-mono text-xs">
-                    0xe6Cae83BdE06E4c305530e199D7217f42808555B
-                  </span>
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Wallets Count:</span>
+                    <span className="text-[var(--accent)]">
+                      {wallets.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Network:</span>
+                    <span className="text-[var(--accent)]">
+                      {sepolia.name} (ID: {sepolia.id})
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Wallet Address:</span>
+                    <span className="text-[var(--warning)] font-mono text-xs">
+                      {privyWallet?.address || "None"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gasless Payment Status */}
+            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+              <h4 className="font-bold mb-2 text-[var(--foreground)]">
+                🚀 Gasless Payment Status
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--text-muted)]">
+                      EIP-7702 Support:
+                    </span>
+                    <span
+                      className={
+                        !!signAuthorization
+                          ? "text-[var(--success)]"
+                          : "text-[var(--error)]"
+                      }
+                    >
+                      {!!signAuthorization
+                        ? "✅ Available"
+                        : "❌ Not Available"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--text-muted)]">
+                      Pimlico API Key:
+                    </span>
+                    <span
+                      className={
+                        process.env.NEXT_PUBLIC_PIMLICO_API_KEY
+                          ? "text-[var(--success)]"
+                          : "text-[var(--error)]"
+                      }
+                    >
+                      {process.env.NEXT_PUBLIC_PIMLICO_API_KEY
+                        ? "✅ Configured"
+                        : "❌ Missing"}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--text-muted)]">
+                      Sponsorship Policy:
+                    </span>
+                    <span
+                      className={
+                        process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
+                          ? "text-[var(--success)]"
+                          : "text-[var(--error)]"
+                      }
+                    >
+                      {process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
+                        ? "✅ Configured"
+                        : "❌ Missing"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-[var(--text-muted)]">
+                      Implementation:
+                    </span>
+                    <span className="text-[var(--accent)] font-mono text-xs">
+                      0xe6Cae83BdE06E4c305530e199D7217f42808555B
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </CollapsibleSection>
       </div>
     </div>
   );
