@@ -41,8 +41,8 @@ export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
         supportedChains: [sepolia],
         loginMethods: ["email", "wallet"],
         appearance: {
-          theme: "light",
-          accentColor: "#676FFF",
+          theme: "dark",
+          accentColor: "#676fff",
         },
       }}
     >

@@ -131,7 +131,7 @@ export default function Home() {
   });
 
   // Use Privy wallet address if available
-  const walletAddress = privyWallet?.address;
+  // const walletAddress = privyWallet?.address;
 
   const handleCreateEmbeddedWallet = async () => {
     try {
@@ -368,71 +368,59 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+    <div className="min-h-screen bg-[var(--background)] py-6">
+      <div className="max-w-5xl mx-auto px-4">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
             🚀 Gasless PYUSD Payments
           </h1>
-          <p className="text-xl text-gray-700 font-medium">
+          <p className="text-lg text-[var(--text-muted)] font-medium">
             EIP-7702 + Pimlico + Privy
           </p>
-          <p className="text-gray-600 mt-2">
+          <p className="text-[var(--text-secondary)] mt-1">
             Send PYUSD on Sepolia without paying gas fees!
           </p>
         </div>
 
         {/* Privy Authentication */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">
-            Authentication
-          </h2>
-          {!ready ? (
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : !authenticated ? (
-            <div>
-              <p className="mb-4 text-gray-600">
-                Login with Privy to use the embedded wallet for secure EIP-7702
-                transactions:
-              </p>
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-[var(--foreground)]">
+              Authentication
+            </h2>
+            {!ready ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--accent)]"></div>
+            ) : !authenticated ? (
               <button
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+                className="bg-[var(--accent)] text-white px-4 py-1.5 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
                 onClick={login}
               >
                 Login with Privy
               </button>
-            </div>
-          ) : (
-            <div>
-              <p className="mb-2 text-green-600">✅ Authenticated with Privy</p>
-              <div className="text-sm text-gray-600 mb-2">
-                <p>Wallets: {wallets.length}</p>
-                {wallets.map((wallet, index) => (
-                  <p key={index}>
-                    {wallet.walletClientType}: {wallet.address}
-                  </p>
-                ))}
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--success)] text-sm">
+                  ✅ Authenticated
+                </span>
+                <button
+                  className="bg-[var(--text-secondary)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--text-muted)] transition-colors"
+                  onClick={logout}
+                >
+                  Logout
+                </button>
               </div>
-              {wallets.length === 0 && (
-                <div className="mb-2">
-                  <p className="text-sm text-orange-600 mb-2">
-                    No embedded wallet found. Create one:
-                  </p>
-                  <button
-                    className="bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-700"
-                    onClick={handleCreateEmbeddedWallet}
-                  >
-                    Create Embedded Wallet
-                  </button>
-                </div>
-              )}
+            )}
+          </div>
+          {authenticated && wallets.length === 0 && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-sm text-[var(--warning)]">
+                No embedded wallet found
+              </span>
               <button
-                className="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600"
-                onClick={logout}
+                className="bg-[var(--text-secondary)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--text-muted)] transition-colors"
+                onClick={handleCreateEmbeddedWallet}
               >
-                Logout
+                Create Wallet
               </button>
             </div>
           )}
@@ -440,9 +428,9 @@ export default function Home() {
 
         {/* Balance Display */}
         {authenticated && privyWallet && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-xl font-bold text-[var(--foreground)]">
                 💰 Your Balances
               </h2>
               <button
@@ -450,33 +438,35 @@ export default function Home() {
                   fetchBalances(privyWallet.address as `0x${string}`)
                 }
                 disabled={balancesLoading}
-                className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {balancesLoading ? "Refreshing..." : "🔄 Refresh"}
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* ETH Balance */}
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-blue-900">
+                    <h3 className="text-lg font-semibold text-[var(--foreground)]">
                       ETH Balance
                     </h3>
-                    <p className="text-sm text-blue-700">Sepolia Testnet</p>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      Sepolia Testnet
+                    </p>
                   </div>
                   <div className="text-right">
                     {balancesLoading ? (
                       <div className="animate-pulse">
-                        <div className="h-6 bg-blue-300 rounded w-20 mb-1"></div>
-                        <div className="h-4 bg-blue-200 rounded w-16"></div>
+                        <div className="h-6 bg-[var(--card-border)] rounded w-20 mb-1"></div>
+                        <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
                       </div>
                     ) : (
                       <>
-                        <p className="text-2xl font-bold text-blue-900">
+                        <p className="text-2xl font-bold text-[var(--foreground)]">
                           {parseFloat(ethBalance).toFixed(4)} ETH
                         </p>
-                        <p className="text-sm text-blue-600">
+                        <p className="text-sm text-[var(--text-muted)]">
                           {parseFloat(ethBalance).toFixed(6)} ETH
                         </p>
                       </>
@@ -486,26 +476,28 @@ export default function Home() {
               </div>
 
               {/* PYUSD Balance */}
-              <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-3 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-green-900">
+                    <h3 className="text-lg font-semibold text-[var(--foreground)]">
                       PYUSD Balance
                     </h3>
-                    <p className="text-sm text-green-700">PayPal USD</p>
+                    <p className="text-sm text-[var(--text-muted)]">
+                      PayPal USD
+                    </p>
                   </div>
                   <div className="text-right">
                     {balancesLoading ? (
                       <div className="animate-pulse">
-                        <div className="h-6 bg-green-300 rounded w-20 mb-1"></div>
-                        <div className="h-4 bg-green-200 rounded w-16"></div>
+                        <div className="h-6 bg-[var(--card-border)] rounded w-20 mb-1"></div>
+                        <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
                       </div>
                     ) : (
                       <>
-                        <p className="text-2xl font-bold text-green-900">
+                        <p className="text-2xl font-bold text-[var(--foreground)]">
                           {parseFloat(pyusdBalance).toFixed(2)} PYUSD
                         </p>
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-[var(--text-muted)]">
                           {parseFloat(pyusdBalance).toFixed(6)} PYUSD
                         </p>
                       </>
@@ -516,9 +508,11 @@ export default function Home() {
             </div>
 
             {/* Wallet Address */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Wallet Address:</p>
-              <p className="font-mono text-sm text-gray-800 break-all">
+            <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+              <p className="text-sm text-[var(--text-muted)] mb-1">
+                Wallet Address:
+              </p>
+              <p className="font-mono text-sm text-[var(--foreground)] break-all">
                 {privyWallet.address}
               </p>
             </div>
@@ -529,34 +523,38 @@ export default function Home() {
         {(transactionStatus.isProcessing ||
           transactionStatus.error ||
           transactionStatus.message) && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
+            <h2 className="text-xl font-bold text-[var(--foreground)] mb-3">
               📊 Transaction Status
             </h2>
 
             {transactionStatus.isProcessing && (
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+              <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
                   <div>
-                    <h3 className="font-semibold text-blue-900">
+                    <h3 className="font-semibold text-[var(--foreground)]">
                       {transactionStatus.type}
                     </h3>
-                    <p className="text-blue-800">{transactionStatus.message}</p>
+                    <p className="text-[var(--text-muted)]">
+                      {transactionStatus.message}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
             {transactionStatus.error && (
-              <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border border-red-200">
+              <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div className="text-red-600 text-xl">❌</div>
+                  <div className="text-[var(--error)] text-xl">❌</div>
                   <div>
-                    <h3 className="font-semibold text-red-900">
+                    <h3 className="font-semibold text-[var(--foreground)]">
                       Transaction Failed
                     </h3>
-                    <p className="text-red-800">{transactionStatus.error}</p>
+                    <p className="text-[var(--error)]">
+                      {transactionStatus.error}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -565,14 +563,14 @@ export default function Home() {
             {transactionStatus.message &&
               !transactionStatus.isProcessing &&
               !transactionStatus.error && (
-                <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <div className="text-green-600 text-xl">✅</div>
+                    <div className="text-[var(--success)] text-xl">✅</div>
                     <div>
-                      <h3 className="font-semibold text-green-900">
+                      <h3 className="font-semibold text-[var(--foreground)]">
                         Transaction Successful
                       </h3>
-                      <p className="text-green-800">
+                      <p className="text-[var(--success)]">
                         {transactionStatus.message}
                       </p>
                     </div>
@@ -584,37 +582,45 @@ export default function Home() {
 
         {/* Last Transaction Display */}
         {lastTransaction && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
+            <h2 className="text-xl font-bold text-[var(--foreground)] mb-3">
               🎉 Last Transaction
             </h2>
-            <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+            <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-green-900">Type:</span>
-                  <span className="text-green-800">{lastTransaction.type}</span>
+                  <span className="font-medium text-[var(--foreground)]">
+                    Type:
+                  </span>
+                  <span className="text-[var(--text-muted)]">
+                    {lastTransaction.type}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-green-900">Amount:</span>
-                  <span className="text-green-800">
+                  <span className="font-medium text-[var(--foreground)]">
+                    Amount:
+                  </span>
+                  <span className="text-[var(--text-muted)]">
                     {lastTransaction.amount} {lastTransaction.token}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-green-900">To:</span>
-                  <span className="text-green-800 font-mono text-sm">
+                  <span className="font-medium text-[var(--foreground)]">
+                    To:
+                  </span>
+                  <span className="text-[var(--text-muted)] font-mono text-sm">
                     {lastTransaction.to}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-green-900">
+                  <span className="font-medium text-[var(--foreground)]">
                     Transaction Hash:
                   </span>
                   <a
                     href={`https://sepolia.etherscan.io/tx/${lastTransaction.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 font-mono text-sm underline"
+                    className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline"
                   >
                     {lastTransaction.hash.slice(0, 10)}...
                     {lastTransaction.hash.slice(-8)}
@@ -625,7 +631,7 @@ export default function Home() {
                     href={`https://sepolia.etherscan.io/tx/${lastTransaction.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                   >
                     🔗 View on Etherscan
                   </a>
@@ -636,94 +642,108 @@ export default function Home() {
         )}
 
         {/* Basic Transaction Tests */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
+          <h2 className="text-xl font-bold mb-3 text-[var(--foreground)]">
             🧪 Basic Transaction Tests
           </h2>
-          <p className="text-gray-600 mb-4">
+          <p className="text-[var(--text-muted)] mb-3">
             Test if Privy can send basic transactions before trying gasless
             payments
           </p>
-          <div className="flex gap-4 flex-wrap mb-4">
+          <div className="flex gap-3 flex-wrap mb-3">
             <button
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:opacity-50"
+              className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
               onClick={handleTestBasicETHTransfer}
               disabled={isLoading || !privyWallet}
             >
               {isLoading ? "Testing..." : "Test ETH Transfer (0.001 ETH)"}
             </button>
             <button
-              className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:opacity-50"
+              className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
               onClick={handleTestBasicPYUSDTransfer}
               disabled={isLoading || !privyWallet}
             >
               {isLoading ? "Testing..." : "Test PYUSD Transfer (1 PYUSD)"}
             </button>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-[var(--text-secondary)]">
             <p>✅ These tests use regular transactions (you pay gas fees)</p>
             <p>✅ If these work, Privy wallet is functioning correctly</p>
-            <p>✅ If these fail, there's a basic Privy setup issue</p>
+            <p>✅ If these fail, there&apos;s a basic Privy setup issue</p>
           </div>
 
           {/* Debug Information */}
-          <div className="mt-4 p-4 bg-gray-800 text-white rounded-lg border border-gray-600">
-            <h4 className="font-bold mb-3 text-lg">🔍 Debug Information</h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="font-medium">Privy Ready:</span>
-                <span className={ready ? "text-green-400" : "text-red-400"}>
-                  {ready ? "✅ Yes" : "❌ No"}
-                </span>
+          <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+            <h4 className="font-bold mb-2 text-[var(--foreground)]">
+              🔍 Debug Information
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span className="font-medium">Privy Ready:</span>
+                  <span
+                    className={
+                      ready ? "text-[var(--success)]" : "text-[var(--error)]"
+                    }
+                  >
+                    {ready ? "✅ Yes" : "❌ No"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Authenticated:</span>
+                  <span
+                    className={
+                      authenticated
+                        ? "text-[var(--success)]"
+                        : "text-[var(--error)]"
+                    }
+                  >
+                    {authenticated ? "✅ Yes" : "❌ No"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">EIP-7702 Support:</span>
+                  <span
+                    className={
+                      !!signAuthorization
+                        ? "text-[var(--success)]"
+                        : "text-[var(--error)]"
+                    }
+                  >
+                    {!!signAuthorization ? "✅ Yes" : "❌ No"}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Authenticated:</span>
-                <span
-                  className={authenticated ? "text-green-400" : "text-red-400"}
-                >
-                  {authenticated ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Wallets Count:</span>
-                <span className="text-blue-400">{wallets.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Privy Wallet Address:</span>
-                <span className="text-yellow-400 font-mono text-xs">
-                  {privyWallet?.address || "None"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">
-                  Sign Authorization Available:
-                </span>
-                <span
-                  className={
-                    !!signAuthorization ? "text-green-400" : "text-red-400"
-                  }
-                >
-                  {!!signAuthorization ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-medium">Network:</span>
-                <span className="text-blue-400">
-                  {sepolia.name} (ID: {sepolia.id})
-                </span>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <span className="font-medium">Wallets Count:</span>
+                  <span className="text-[var(--accent)]">{wallets.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Network:</span>
+                  <span className="text-[var(--accent)]">
+                    {sepolia.name} (ID: {sepolia.id})
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Wallet Address:</span>
+                  <span className="text-[var(--warning)] font-mono text-xs">
+                    {privyWallet?.address || "None"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Gasless Payment */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900">
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
+          <h2 className="text-xl font-bold mb-3 text-[var(--foreground)]">
             Send PYUSD (Gasless)
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
                 Recipient Address
               </label>
               <input
@@ -731,34 +751,38 @@ export default function Home() {
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value as `0x${string}`)}
                 placeholder="Enter recipient address"
-                className="w-full px-3 py-2 border-2 border-gray-400 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
+                className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Amount (PYUSD)
-              </label>
-              <input
-                type="text"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
-                className="w-full px-3 py-2 border-2 border-gray-400 bg-white text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-500"
-              />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Amount (PYUSD)
+                </label>
+                <input
+                  type="text"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Enter amount"
+                  className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+                  onClick={handleGaslessPayment}
+                  disabled={isLoading || !authenticated}
+                >
+                  {isLoading
+                    ? "Processing..."
+                    : !authenticated
+                    ? "Login First"
+                    : "Send PYUSD"}
+                </button>
+              </div>
             </div>
-            <button
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-              onClick={handleGaslessPayment}
-              disabled={isLoading || !authenticated}
-            >
-              {isLoading
-                ? "Processing..."
-                : !authenticated
-                ? "Login with Privy First"
-                : "Send PYUSD (Gasless)"}
-            </button>
           </div>
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-3 text-sm text-[var(--text-muted)]">
             <p>✅ Uses EIP-7702 to make your EOA act as a smart account</p>
             <p>✅ Pimlico sponsors the gas fees</p>
             <p>✅ Real PYUSD transactions on Sepolia</p>
@@ -766,62 +790,68 @@ export default function Home() {
           </div>
 
           {/* Gasless Payment Status */}
-          <div className="mt-4 p-4 bg-gray-800 rounded-lg border border-gray-600">
-            <h4 className="font-bold mb-3 text-white text-lg">
+          <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+            <h4 className="font-bold mb-2 text-[var(--foreground)]">
               🚀 Gasless Payment Status
             </h4>
-            <div className="text-sm space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-300">
-                  EIP-7702 Support:
-                </span>
-                <span
-                  className={
-                    !!signAuthorization ? "text-green-400" : "text-red-400"
-                  }
-                >
-                  {!!signAuthorization ? "✅ Available" : "❌ Not Available"}
-                </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-[var(--text-muted)]">
+                    EIP-7702 Support:
+                  </span>
+                  <span
+                    className={
+                      !!signAuthorization
+                        ? "text-[var(--success)]"
+                        : "text-[var(--error)]"
+                    }
+                  >
+                    {!!signAuthorization ? "✅ Available" : "❌ Not Available"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-[var(--text-muted)]">
+                    Pimlico API Key:
+                  </span>
+                  <span
+                    className={
+                      process.env.NEXT_PUBLIC_PIMLICO_API_KEY
+                        ? "text-[var(--success)]"
+                        : "text-[var(--error)]"
+                    }
+                  >
+                    {process.env.NEXT_PUBLIC_PIMLICO_API_KEY
+                      ? "✅ Configured"
+                      : "❌ Missing"}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-300">
-                  Pimlico API Key:
-                </span>
-                <span
-                  className={
-                    process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }
-                >
-                  {process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                    ? "✅ Configured"
-                    : "❌ Missing"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-300">
-                  Sponsorship Policy:
-                </span>
-                <span
-                  className={
-                    process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                      ? "text-green-400"
-                      : "text-red-400"
-                  }
-                >
-                  {process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                    ? "✅ Configured"
-                    : "❌ Missing"}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-gray-300">
-                  Implementation Address:
-                </span>
-                <span className="text-blue-400 font-mono text-xs">
-                  0xe6Cae83BdE06E4c305530e199D7217f42808555B
-                </span>
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-[var(--text-muted)]">
+                    Sponsorship Policy:
+                  </span>
+                  <span
+                    className={
+                      process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
+                        ? "text-[var(--success)]"
+                        : "text-[var(--error)]"
+                    }
+                  >
+                    {process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
+                      ? "✅ Configured"
+                      : "❌ Missing"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-[var(--text-muted)]">
+                    Implementation:
+                  </span>
+                  <span className="text-[var(--accent)] font-mono text-xs">
+                    0xe6Cae83BdE06E4c305530e199D7217f42808555B
+                  </span>
+                </div>
               </div>
             </div>
           </div>
