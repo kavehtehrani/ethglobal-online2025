@@ -19,6 +19,7 @@ import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getTransactionLink, getAddressLink } from "@/lib/explorer";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
@@ -26,12 +27,8 @@ export default function Home() {
   const { signAuthorization } = useSign7702Authorization();
   const { createWallet } = useCreateWallet();
 
-  const [recipient, setRecipient] = useState(
-    DEFAULT_TEST_VALUES.RECIPIENT_ADDRESS
-  );
-  const [amount, setAmount] = useState<string>(
-    DEFAULT_TEST_VALUES.AMOUNT_PYUSD
-  );
+  const [recipient, setRecipient] = useState<`0x${string}`>("" as `0x${string}`);
+  const [amount, setAmount] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
   const [pyusdBalance, setPyusdBalance] = useState<string>("0");
@@ -190,7 +187,7 @@ export default function Home() {
         setTransactionStatus({
           isProcessing: false,
           type: "Basic ETH Transfer",
-          message: `Successfully sent ${result.amount} ETH to ${result.to}`,
+          message: "Transaction Successful",
           error: null,
         });
         notification.success(
@@ -256,7 +253,7 @@ export default function Home() {
         setTransactionStatus({
           isProcessing: false,
           type: "Basic PYUSD Transfer",
-          message: `Successfully sent ${result.amount} PYUSD to ${result.to}`,
+          message: "Transaction Successful",
           error: null,
         });
         notification.success(
@@ -322,7 +319,7 @@ export default function Home() {
         setTransactionStatus({
           isProcessing: false,
           type: "Test Gasless PYUSD Transfer",
-          message: `Successfully sent ${result.amount} ${result.token} to ${result.to}`,
+          message: "Transaction Successful",
           error: null,
         });
         notification.success(
@@ -408,7 +405,7 @@ export default function Home() {
         setTransactionStatus({
           isProcessing: false,
           type: "Gasless PYUSD Payment",
-          message: `Successfully sent ${result.amount} ${result.token} to ${result.to}`,
+          message: "Transaction Successful",
           error: null,
         });
         notification.success(
@@ -511,10 +508,11 @@ export default function Home() {
                   href={getAddressLink(privyWallet.address)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors"
+                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
                 >
                   {privyWallet.address.slice(0, 6)}...
                   {privyWallet.address.slice(-4)}
+                  <ArrowTopRightOnSquareIcon className="h-3 w-3" />
                 </a>
               </div>
             </div>
@@ -647,31 +645,13 @@ export default function Home() {
               </div>
             )}
 
-            {transactionStatus.message &&
-              !transactionStatus.isProcessing &&
-              !transactionStatus.error && (
-                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-[var(--success)] text-xl">✅</div>
-                    <div>
-                      <h3 className="font-semibold text-[var(--foreground)]">
-                        Transaction Successful
-                      </h3>
-                      <p className="text-[var(--success)]">
-                        {transactionStatus.message}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
             {/* Last Transaction Details */}
             {lastTransaction && (
               <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
                 <h3 className="font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
-                  🎉 Last Transaction
+                  ✅ Transaction Successful
                 </h3>
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-[var(--foreground)]">
                       Type:
@@ -692,9 +672,16 @@ export default function Home() {
                     <span className="font-medium text-[var(--foreground)]">
                       To:
                     </span>
-                    <span className="text-[var(--text-muted)] font-mono text-sm">
-                      {lastTransaction.to}
-                    </span>
+                    <a
+                      href={getAddressLink(lastTransaction.to)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
+                    >
+                      {lastTransaction.to.slice(0, 6)}...
+                      {lastTransaction.to.slice(-4)}
+                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                    </a>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-[var(--foreground)]">
@@ -704,20 +691,11 @@ export default function Home() {
                       href={getTransactionLink(lastTransaction.hash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1"
                     >
                       {lastTransaction.hash.slice(0, 10)}...
                       {lastTransaction.hash.slice(-8)}
-                    </a>
-                  </div>
-                  <div className="pt-2">
-                    <a
-                      href={getTransactionLink(lastTransaction.hash)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-                    >
-                      🔗 View on Blockscout
+                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
                     </a>
                   </div>
                 </div>
