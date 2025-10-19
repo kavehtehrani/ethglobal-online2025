@@ -23,19 +23,37 @@ import {
   ArrowTopRightOnSquareIcon,
   CheckCircleIcon,
   XCircleIcon,
+  ShareIcon,
+  ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
 import { isAddress } from "viem";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
   const { createWallet } = useCreateWallet();
+  const searchParams = useSearchParams();
 
   const [recipient, setRecipient] = useState<`0x${string}`>(
     "" as `0x${string}`
   );
   const [amount, setAmount] = useState<string>("");
+
+  // Parse URL parameters for payment links
+  useEffect(() => {
+    const urlRecipient = searchParams.get("to");
+    const urlAmount = searchParams.get("amount");
+
+    if (urlRecipient && isAddress(urlRecipient)) {
+      setRecipient(urlRecipient as `0x${string}`);
+    }
+
+    if (urlAmount && !isNaN(parseFloat(urlAmount))) {
+      setAmount(urlAmount);
+    }
+  }, [searchParams]);
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
   const [pyusdBalance, setPyusdBalance] = useState<string>("0");
@@ -58,6 +76,8 @@ export default function Home() {
     message: "",
     error: null,
   });
+  const [showPaymentLink, setShowPaymentLink] = useState(false);
+  const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
 
   // Get the embedded wallet or any Privy wallet
   const embeddedWallet = wallets.find(
@@ -437,6 +457,40 @@ export default function Home() {
       notification.error(`Gasless payment failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Generate payment link
+  const generatePaymentLink = () => {
+    const baseUrl = window.location.origin;
+    const params = new URLSearchParams();
+
+    if (recipient && isAddress(recipient)) {
+      params.set("to", recipient);
+    }
+
+    if (amount && !isNaN(parseFloat(amount))) {
+      params.set("amount", amount);
+    }
+
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  // Copy payment link to clipboard
+  const copyPaymentLink = async () => {
+    try {
+      const link = generatePaymentLink();
+      await navigator.clipboard.writeText(link);
+      setPaymentLinkCopied(true);
+      notification.success("Payment link copied to clipboard!");
+
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setPaymentLinkCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy payment link:", error);
+      notification.error("Failed to copy payment link");
     }
   };
 
@@ -826,6 +880,62 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* Payment Link Section */}
+          {(recipient || amount) && (
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShareIcon className="h-5 w-5 text-[var(--accent)]" />
+                  <span className="text-sm font-medium text-[var(--foreground)]">
+                    Share Payment Link
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowPaymentLink(!showPaymentLink)}
+                    className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                  >
+                    {showPaymentLink ? "Hide" : "Show"} Link
+                  </button>
+                  <button
+                    onClick={copyPaymentLink}
+                    disabled={paymentLinkCopied}
+                    className={`flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors ${
+                      paymentLinkCopied
+                        ? "bg-[var(--success)] text-white"
+                        : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                    }`}
+                  >
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                    {paymentLinkCopied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              {showPaymentLink && (
+                <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+                  <p className="text-xs text-[var(--text-muted)] mb-2">
+                    Share this link to pre-fill the payment form:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={generatePaymentLink()}
+                      readOnly
+                      className="flex-1 px-2 py-1 text-xs bg-[var(--background)] border border-[var(--card-border)] rounded text-[var(--foreground)] font-mono"
+                    />
+                    <button
+                      onClick={copyPaymentLink}
+                      className="p-1 text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                    >
+                      <ClipboardDocumentIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* How does this work? */}
