@@ -9,8 +9,11 @@ export const CONTRACTS = {
   // Our deployed SimpleAccount contract on Sepolia
   SIMPLE_ACCOUNT: "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
 
-  // SimpleAccount implementation address (from Pimlico EIP-7702 demo)
-  SIMPLE_ACCOUNT_IMPLEMENTATION: "0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`,
+  // EIP-7702 SimpleAccount implementation address (must have bytecode on Sepolia).
+  // Prefer setting NEXT_PUBLIC_7702_IMPLEMENTATION in .env.local to your chosen implementation.
+  SIMPLE_ACCOUNT_IMPLEMENTATION:
+    (process.env.NEXT_PUBLIC_7702_IMPLEMENTATION as `0x${string}`) ||
+    ("0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`),
 } as const;
 
 // Pimlico configuration
