@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Gasless PYUSD Payments
 
-## Getting Started
+A clean Next.js application for sending PYUSD on Sepolia without paying gas fees using EIP-7702 + Pimlico + Privy.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- ✅ **Privy Authentication**: Secure embedded wallet with email/wallet login
+- ✅ **EIP-7702 Support**: Make your EOA act as a smart account
+- ✅ **Gasless Transactions**: Pimlico sponsors gas fees
+- ✅ **PYUSD Integration**: Real PYUSD transfers on Sepolia
+- ✅ **Clean Architecture**: No Scaffold-ETH complexity
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Install dependencies**:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. **Create environment file**:
+   Create `.env.local` with:
 
-To learn more about Next.js, take a look at the following resources:
+   ```env
+   # Privy Configuration
+   NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id_here
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   # Pimlico Configuration
+   NEXT_PUBLIC_PIMLICO_API_KEY=your_pimlico_api_key_here
+   NEXT_PUBLIC_SPONSORSHIP_POLICY_ID=your_sponsorship_policy_id_here
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   # Optional: Custom EIP-7702 Implementation
+   # NEXT_PUBLIC_7702_IMPLEMENTATION=0xYourImplementationAddress
+   ```
 
-## Deploy on Vercel
+3. **Start development server**:
+   ```bash
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Login with Privy**: Use email or wallet to authenticate
+2. **Test Basic Transactions**: Verify Privy wallet works with regular ETH/PYUSD transfers
+3. **Send Gasless Payments**: Use EIP-7702 + Pimlico for gasless PYUSD transfers
+
+## Architecture
+
+- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
+- **Authentication**: Privy with embedded wallets
+- **Blockchain**: Viem for Ethereum interactions
+- **Account Abstraction**: Permissionless for EIP-7702
+- **Gas Sponsorship**: Pimlico for gasless transactions
+
+## Key Files
+
+- `src/app/page.tsx` - Main application interface
+- `src/lib/privyGaslessPayment.ts` - Gasless payment implementation
+- `src/lib/basicPrivyTest.ts` - Basic transaction tests
+- `src/lib/constants.ts` - Configuration constants
+- `src/components/PrivyProviderWrapper.tsx` - Privy provider setup
+
+## Testing
+
+The app includes basic transaction tests to verify:
+
+1. Privy wallet connectivity
+2. ETH transfer functionality
+3. PYUSD transfer functionality
+4. Gasless payment implementation
+
+## Network
+
+- **Chain**: Sepolia Testnet
+- **PYUSD Contract**: `0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9`
+- **EIP-7702 Implementation**: `0xe6Cae83BdE06E4c305530e199D7217f42808555B`
