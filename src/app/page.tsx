@@ -18,6 +18,7 @@ import {
 import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { getTransactionLink, getAddressLink } from "@/lib/explorer";
 
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
@@ -507,7 +508,7 @@ export default function Home() {
                   Wallet Address:
                 </span>
                 <a
-                  href={`https://sepolia.blockscout.com/address/${privyWallet.address}`}
+                  href={getAddressLink(privyWallet.address)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors"
@@ -700,7 +701,7 @@ export default function Home() {
                       Transaction Hash:
                     </span>
                     <a
-                      href={`https://eth-sepolia.blockscout.com/tx/${lastTransaction.hash}`}
+                      href={getTransactionLink(lastTransaction.hash)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline"
@@ -711,7 +712,7 @@ export default function Home() {
                   </div>
                   <div className="pt-2">
                     <a
-                      href={`https://eth-sepolia.blockscout.com/tx/${lastTransaction.hash}`}
+                      href={getTransactionLink(lastTransaction.hash)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
