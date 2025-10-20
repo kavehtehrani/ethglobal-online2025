@@ -9,7 +9,7 @@ import {
 } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
 import { createPublicClient, http, formatUnits } from "viem";
-import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
+import { CONTRACTS, RPC_ENDPOINTS, DEFAULT_TEST_VALUES } from "@/lib/constants";
 import { executePrivyGaslessPayment } from "@/lib/privyGaslessPayment";
 import {
   testBasicPrivyTransaction,
@@ -37,10 +37,12 @@ export default function Home() {
   const { createWallet } = useCreateWallet();
   const searchParams = useSearchParams();
 
-  const [recipient, setRecipient] = useState<`0x${string}`>(
-    "" as `0x${string}`
+  const [recipient, setRecipient] = useState<`0x${string}` | "">(
+    DEFAULT_TEST_VALUES.RECIPIENT_ADDRESS
   );
-  const [amount, setAmount] = useState<string>("");
+  const [amount, setAmount] = useState<string>(
+    DEFAULT_TEST_VALUES.AMOUNT_PYUSD
+  );
 
   // Parse URL parameters for payment links
   useEffect(() => {
@@ -188,6 +190,18 @@ export default function Home() {
       return;
     }
 
+    // Validate recipient address
+    if (!recipient || !isAddress(recipient)) {
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Please enter a valid recipient address",
+      });
+      notification.error("Please enter a valid recipient address");
+      return;
+    }
+
     setTransactionStatus({
       isProcessing: true,
       type: "Basic ETH Transfer",
@@ -198,12 +212,17 @@ export default function Home() {
 
     try {
       const result = await testBasicPrivyTransaction({
-        privySendTransaction: async (tx: unknown) => {
+        privySendTransaction: async (tx: {
+          to: `0x${string}`;
+          value?: bigint;
+          data?: `0x${string}`;
+          chainId: number;
+        }) => {
           const result = await sendTransaction(tx);
           return result.hash;
         },
         walletAddress: privyWallet.address as `0x${string}`,
-        recipientAddress: recipient,
+        recipientAddress: recipient as `0x${string}`,
         amount: "0.001", // Small test amount
       });
 
@@ -257,6 +276,18 @@ export default function Home() {
       return;
     }
 
+    // Validate recipient address
+    if (!recipient || !isAddress(recipient)) {
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Please enter a valid recipient address",
+      });
+      notification.error("Please enter a valid recipient address");
+      return;
+    }
+
     setTransactionStatus({
       isProcessing: true,
       type: "Basic PYUSD Transfer",
@@ -267,12 +298,17 @@ export default function Home() {
 
     try {
       const result = await testBasicPYUSDTransfer({
-        privySendTransaction: async (tx: unknown) => {
+        privySendTransaction: async (tx: {
+          to: `0x${string}`;
+          value?: bigint;
+          data?: `0x${string}`;
+          chainId: number;
+        }) => {
           const result = await sendTransaction(tx);
           return result.hash;
         },
         walletAddress: privyWallet.address as `0x${string}`,
-        recipientAddress: recipient,
+        recipientAddress: recipient as `0x${string}`,
         amount: "1", // 1 PYUSD test
       });
 
@@ -326,6 +362,18 @@ export default function Home() {
       return;
     }
 
+    // Validate recipient address
+    if (!recipient || !isAddress(recipient)) {
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Please enter a valid recipient address",
+      });
+      notification.error("Please enter a valid recipient address");
+      return;
+    }
+
     setTransactionStatus({
       isProcessing: true,
       type: "Test Gasless PYUSD Transfer",
@@ -336,7 +384,7 @@ export default function Home() {
 
     try {
       const result = await executePrivyGaslessPayment({
-        recipientAddress: recipient, // Use the same recipient as the main form
+        recipientAddress: recipient as `0x${string}`, // Use the same recipient as the main form
         amount: "1", // 1 PYUSD test
         privyWallet: {
           address: privyWallet.address as `0x${string}`,
@@ -347,13 +395,11 @@ export default function Home() {
           chainId: number;
           nonce: number;
         }) => {
-          const result = await signAuthorization({
+          return await signAuthorization({
             contractAddress: auth.contractAddress as `0x${string}`,
             chainId: auth.chainId,
             nonce: auth.nonce,
           });
-          // Convert the signature result to a string if needed
-          return typeof result === "string" ? result : JSON.stringify(result);
         },
       });
 
@@ -437,20 +483,18 @@ export default function Home() {
 
     try {
       const result = await executePrivyGaslessPayment({
-        recipientAddress: recipient,
+        recipientAddress: recipient as `0x${string}`,
         amount: amount,
         privyWallet: privyWallet as {
           address: `0x${string}`;
           getEthereumProvider: () => Promise<unknown>;
         },
         signAuthorization: async (auth) => {
-          const result = await signAuthorization({
+          return await signAuthorization({
             contractAddress: auth.contractAddress as `0x${string}`,
             chainId: auth.chainId,
             nonce: auth.nonce,
           });
-          // Convert the signature result to a string if needed
-          return typeof result === "string" ? result : JSON.stringify(result);
         },
       });
 

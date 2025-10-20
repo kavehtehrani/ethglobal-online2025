@@ -8,7 +8,7 @@ import {
   TierStatus,
   ContractConfig,
 } from "@/lib/gaslessPaymentContract";
-import { RefreshIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 interface TierStatusProps {
   userAddress: `0x${string}`;
@@ -78,7 +78,7 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
             onClick={fetchTierData}
             className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
           >
-            <RefreshIcon className="h-4 w-4" />
+            <ArrowPathIcon className="h-4 w-4" />
           </button>
         </div>
         <div className="text-[var(--error)] text-sm">Error: {error}</div>
@@ -102,7 +102,7 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
           onClick={fetchTierData}
           className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
         >
-          <RefreshIcon className="h-4 w-4" />
+          <ArrowPathIcon className="h-4 w-4" />
         </button>
       </div>
 

@@ -60,7 +60,7 @@ export async function executePrivyGaslessPayment({
     contractAddress: string;
     chainId: number;
     nonce: number;
-  }) => Promise<string>;
+  }) => Promise<any>;
 }) {
   console.log("🚀 Starting Privy gasless payment...");
   console.log("📊 Payment details:", {
@@ -104,7 +104,7 @@ export async function executePrivyGaslessPayment({
   const walletClient = createWalletClient({
     account: privyWallet.address as Hex,
     chain: sepolia,
-    transport: custom(await privyWallet.getEthereumProvider()),
+    transport: custom((await privyWallet.getEthereumProvider()) as any),
   });
 
   console.log("✅ Wallet client created");
@@ -159,11 +159,11 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ Smart account client created");
 
-  // Step 7: Sign EIP-7702 authorization (following Pimlico repo exactly)
+  // Step 7: Sign EIP-7702 authorization (following Privy + Pimlico documentation exactly)
   console.log("🔐 Signing EIP-7702 authorization...");
 
   const authorization = await signAuthorization({
-    contractAddress: CONTRACTS.GASLESS_PAYMENT_ACCOUNT, // Our deployed GaslessPaymentAccount contract
+    contractAddress: "0xe6Cae83BdE06E4c305530e199D7217f42808555B", // SimpleAccount implementation (from docs)
     chainId: sepolia.id,
     nonce: await publicClient.getTransactionCount({
       address: privyWallet.address,
@@ -173,12 +173,32 @@ export async function executePrivyGaslessPayment({
   console.log("✅ EIP-7702 authorization signed");
 
   // Step 8: Build execute call data for our smart contract
-  const executeData = encodeFunctionData({
+  // First, encode the PYUSD transfer call data
+  const pyusdTransferData = encodeFunctionData({
     abi: [
       {
         inputs: [
           { internalType: "address", name: "to", type: "address" },
           { internalType: "uint256", name: "amount", type: "uint256" },
+        ],
+        name: "transfer",
+        outputs: [{ internalType: "bool", name: "", type: "bool" }],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ],
+    functionName: "transfer",
+    args: [recipientAddress, amountInWei],
+  });
+
+  // Then encode the SimpleAccount execute call
+  const executeData = encodeFunctionData({
+    abi: [
+      {
+        inputs: [
+          { internalType: "address", name: "target", type: "address" },
+          { internalType: "uint256", name: "value", type: "uint256" },
+          { internalType: "bytes", name: "data", type: "bytes" },
         ],
         name: "execute",
         outputs: [],
@@ -187,7 +207,7 @@ export async function executePrivyGaslessPayment({
       },
     ],
     functionName: "execute",
-    args: [recipientAddress, amountInWei],
+    args: [CONTRACTS.PYUSD, BigInt(0), pyusdTransferData],
   });
 
   console.log("📝 Execute data built");
@@ -203,7 +223,7 @@ export async function executePrivyGaslessPayment({
   const hash = await smartAccountClient.sendTransaction({
     calls: [
       {
-        to: CONTRACTS.GASLESS_PAYMENT_ACCOUNT,
+        to: privyWallet.address, // The EOA that will act as smart account
         data: executeData,
         value: BigInt(0),
       },
