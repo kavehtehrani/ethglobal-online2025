@@ -17,7 +17,7 @@ async function main() {
   // Deploy GaslessPaymentAccount with MockPYUSD
   const gaslessPaymentAccount = await viem.deployContract(
     "GaslessPaymentAccount",
-    [mockPYUSD.address, FEE_RECEIVER]
+    [mockPYUSD.address, FEE_RECEIVER, FEE_RECEIVER] // Using fee receiver as initial owner
   );
 
   console.log(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {GaslessPaymentAccount} from "../contracts/GaslessPaymentAccount.sol";
 import {MockPYUSD} from "../contracts/MockPYUSD.sol";
@@ -13,15 +13,17 @@ contract GaslessPaymentAccountTest is Test {
     address constant FEE_RECEIVER = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
     address constant user1 = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
     address constant user2 = 0x90F79bf6EB2c4f870365E785982E1f101E93b906;
+    address constant owner = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266; // Account #0
 
     function setUp() public {
         // Deploy mock PYUSD token
         pyusd = new MockPYUSD(1000000e6); // 1M PYUSD
 
-        // Deploy GaslessPaymentAccount with mock PYUSD address and fee receiver
+        // Deploy GaslessPaymentAccount with mock PYUSD address, fee receiver, and owner
         gaslessPaymentAccount = new GaslessPaymentAccount(
             address(pyusd),
-            FEE_RECEIVER
+            FEE_RECEIVER,
+            owner
         );
 
         // Give users some PYUSD
@@ -37,12 +39,13 @@ contract GaslessPaymentAccountTest is Test {
     }
 
     function test_InitialState() public view {
-        assertEq(gaslessPaymentAccount.FEE_RECEIVER(), FEE_RECEIVER);
-        assertEq(gaslessPaymentAccount.FREE_TIER_LIMIT(), 5);
-        assertEq(gaslessPaymentAccount.FREE_TIER_RATIO(), 5);
-        assertEq(gaslessPaymentAccount.SERVICE_FEE_BASIS_POINTS(), 50); // 0.5%
-        assertEq(gaslessPaymentAccount.MIN_SERVICE_FEE(), 0.01e6); // $0.01
-        assertEq(gaslessPaymentAccount.MAX_SERVICE_FEE(), 5e6); // $5.00
+        assertEq(gaslessPaymentAccount.feeReceiver(), FEE_RECEIVER);
+        assertEq(gaslessPaymentAccount.freeTierLimit(), 5);
+        assertEq(gaslessPaymentAccount.freeTierRatio(), 5);
+        assertEq(gaslessPaymentAccount.serviceFeeBasisPoints(), 50); // 0.5%
+        assertEq(gaslessPaymentAccount.minServiceFee(), 0.01e6); // $0.01
+        assertEq(gaslessPaymentAccount.maxServiceFee(), 5e6); // $5.00
+        assertEq(gaslessPaymentAccount.owner(), owner);
     }
 
     function test_FreeTierTransactions() public {
@@ -57,8 +60,9 @@ contract GaslessPaymentAccountTest is Test {
             assertEq(pyusd.balanceOf(user1), initialBalance - 10e6);
 
             // Check tier status
-            (uint256 freeRemaining, ) = gaslessPaymentAccount
-                .getTierStatus(user1);
+            (uint256 freeRemaining, ) = gaslessPaymentAccount.getTierStatus(
+                user1
+            );
             assertEq(freeRemaining, 4 - i);
         }
     }
@@ -118,21 +122,20 @@ contract GaslessPaymentAccountTest is Test {
         assertEq(pyusd.balanceOf(FEE_RECEIVER), finalFeeReceiverBalance);
     }
 
-
     function test_ServiceFeeCalculation() public {
-        // Test service fee calculation by checking the constants
+        // Test service fee calculation by checking the parameters
         assertEq(
-            gaslessPaymentAccount.SERVICE_FEE_BASIS_POINTS(),
+            gaslessPaymentAccount.serviceFeeBasisPoints(),
             50,
             "Service fee should be 0.5% (50 basis points)"
         );
         assertEq(
-            gaslessPaymentAccount.MIN_SERVICE_FEE(),
+            gaslessPaymentAccount.minServiceFee(),
             0.01e6,
             "Minimum fee should be $0.01"
         );
         assertEq(
-            gaslessPaymentAccount.MAX_SERVICE_FEE(),
+            gaslessPaymentAccount.maxServiceFee(),
             5e6,
             "Maximum fee should be $5.00"
         );
@@ -140,10 +143,8 @@ contract GaslessPaymentAccountTest is Test {
 
     function test_TierStatusCalculation() public {
         // Initial status
-        (
-            uint256 freeRemaining,
-            uint256 nextFree
-        ) = gaslessPaymentAccount.getTierStatus(user1);
+        (uint256 freeRemaining, uint256 nextFree) = gaslessPaymentAccount
+            .getTierStatus(user1);
         assertEq(freeRemaining, 5);
         assertEq(nextFree, 1);
 
@@ -166,5 +167,130 @@ contract GaslessPaymentAccountTest is Test {
         (freeRemaining, nextFree) = gaslessPaymentAccount.getTierStatus(user1);
         assertEq(freeRemaining, 0);
         assertEq(nextFree, 1); // Next transaction (6th) is free
+    }
+
+    function test_OwnerOnlyFunctions() public {
+        // Test that non-owners cannot call setter functions
+        vm.prank(user1); // user1 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setFreeTierLimit(10);
+
+        vm.prank(user2); // user2 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setFreeTierRatio(3);
+
+        vm.prank(user1); // user1 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setServiceFeeBasisPoints(100);
+
+        vm.prank(user2); // user2 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setMinServiceFee(0.02e6);
+
+        vm.prank(user1); // user1 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setMaxServiceFee(10e6);
+
+        vm.prank(user2); // user2 is not owner
+        vm.expectRevert();
+        gaslessPaymentAccount.setFeeReceiver(user2);
+
+        // Test that owner can call setter functions
+        vm.prank(owner);
+        gaslessPaymentAccount.setFreeTierLimit(10);
+        assertEq(gaslessPaymentAccount.freeTierLimit(), 10);
+
+        // Test setting free tier ratio
+        vm.prank(owner);
+        gaslessPaymentAccount.setFreeTierRatio(3);
+        assertEq(gaslessPaymentAccount.freeTierRatio(), 3);
+
+        // Test setting service fee basis points
+        vm.prank(owner);
+        gaslessPaymentAccount.setServiceFeeBasisPoints(100); // 1%
+        assertEq(gaslessPaymentAccount.serviceFeeBasisPoints(), 100);
+
+        // Test setting min/max fees
+        vm.prank(owner);
+        gaslessPaymentAccount.setMinServiceFee(0.02e6); // $0.02
+        assertEq(gaslessPaymentAccount.minServiceFee(), 0.02e6);
+
+        vm.prank(owner);
+        gaslessPaymentAccount.setMaxServiceFee(10e6); // $10.00
+        assertEq(gaslessPaymentAccount.maxServiceFee(), 10e6);
+
+        // Test setting fee receiver
+        vm.prank(owner);
+        gaslessPaymentAccount.setFeeReceiver(user2);
+        assertEq(gaslessPaymentAccount.feeReceiver(), user2);
+    }
+
+    function test_NonOwnerAccessControl() public {
+        // Test that non-owners cannot call any owner-only functions
+        // Using user1 (not owner)
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setFreeTierLimit(10);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setFreeTierRatio(3);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setServiceFeeBasisPoints(100);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setMinServiceFee(0.02e6);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setMaxServiceFee(10e6);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.setFeeReceiver(user2);
+
+        // Test that non-owners cannot call OpenZeppelin owner functions
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.transferOwnership(user1);
+
+        vm.prank(user1);
+        vm.expectRevert();
+        gaslessPaymentAccount.renounceOwnership();
+
+        // Verify original values are unchanged (non-owners couldn't modify them)
+        assertEq(gaslessPaymentAccount.freeTierLimit(), 5);
+        assertEq(gaslessPaymentAccount.freeTierRatio(), 5);
+        assertEq(gaslessPaymentAccount.serviceFeeBasisPoints(), 50);
+        assertEq(gaslessPaymentAccount.minServiceFee(), 0.01e6);
+        assertEq(gaslessPaymentAccount.maxServiceFee(), 5e6);
+        assertEq(gaslessPaymentAccount.feeReceiver(), FEE_RECEIVER);
+        assertEq(gaslessPaymentAccount.owner(), owner);
+    }
+
+    function test_OwnerOnlyFunctionValidation() public {
+        // Test validation in setter functions
+        vm.prank(owner);
+        vm.expectRevert("Free tier ratio must be greater than 0");
+        gaslessPaymentAccount.setFreeTierRatio(0);
+
+        vm.prank(owner);
+        vm.expectRevert("Basis points cannot exceed 10000 (100%)");
+        gaslessPaymentAccount.setServiceFeeBasisPoints(10001);
+
+        vm.prank(owner);
+        vm.expectRevert("Min fee cannot exceed max fee");
+        gaslessPaymentAccount.setMinServiceFee(10e6); // This exceeds current max of 5e6
+
+        vm.prank(owner);
+        vm.expectRevert("Max fee cannot be less than min fee");
+        gaslessPaymentAccount.setMaxServiceFee(0.005e6); // This is less than current min of 0.01e6
+
+        vm.prank(owner);
+        vm.expectRevert("Invalid fee receiver address");
+        gaslessPaymentAccount.setFeeReceiver(address(0));
     }
 }

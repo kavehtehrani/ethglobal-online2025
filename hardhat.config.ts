@@ -4,7 +4,7 @@ import hardhatViem from "@nomicfoundation/hardhat-viem";
 const config: HardhatUserConfig = {
   plugins: [hardhatViem],
   solidity: {
-    version: "0.8.19",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,

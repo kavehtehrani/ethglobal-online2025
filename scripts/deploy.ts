@@ -14,7 +14,7 @@ async function main() {
   // Deploy the contract using viem
   const gaslessPaymentAccount = await viem.deployContract(
     "GaslessPaymentAccount",
-    [PYUSD_TOKEN, FEE_RECEIVER]
+    [PYUSD_TOKEN, FEE_RECEIVER, FEE_RECEIVER] // Using fee receiver as initial owner
   );
 
   console.log(
