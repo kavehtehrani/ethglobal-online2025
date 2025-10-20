@@ -3,16 +3,16 @@ pragma solidity ^0.8.19;
 
 /**
  * @title GaslessPaymentAccount
- * @dev EIP-7702 compatible account implementation with tiered fee system
+ * @dev EIP-7702 compatible account implementation with simple fee system
  * Allows EOAs to delegate execution to this contract via EIP-7702
- * Implements free tier (5 free transactions, then 1 in 5 free) and paid tier
+ * Implements free tier: first 5 transactions are free, then every 5th transaction is free
  */
 contract GaslessPaymentAccount {
     // Fee configuration
     address public immutable FEE_RECEIVER;
-    uint256 public constant FREE_TIER_LIMIT = 5;
+    uint256 public constant FREE_TIER_LIMIT = 5; // introductory offer
     uint256 public constant FREE_TIER_RATIO = 5; // 1 in 5 free after limit
-    uint256 public constant SERVICE_FEE_BASIS_POINTS = 50; // 0.5% = 50 basis points
+    uint256 public constant SERVICE_FEE_BASIS_POINTS = 50; // 50 bps
     uint256 public constant MIN_SERVICE_FEE = 0.01e6; // $0.01 in PYUSD (6 decimals)
     uint256 public constant MAX_SERVICE_FEE = 5e6; // $5.00 in PYUSD (6 decimals)
 
@@ -20,14 +20,7 @@ contract GaslessPaymentAccount {
     address public immutable PYUSD_TOKEN;
 
     // User tracking
-    struct UserTier {
-        uint256 freeTransactionsUsed;
-        uint256 totalTransactions;
-        bool isPaidTier;
-        uint256 subscriptionExpiry;
-    }
-
-    mapping(address => UserTier) public userTiers;
+    mapping(address => uint256) public userTransactionCounts;
 
     // Events
     event TransactionExecuted(
@@ -38,7 +31,6 @@ contract GaslessPaymentAccount {
         uint256 serviceFee
     );
 
-    event UserUpgraded(address indexed user, uint256 subscriptionExpiry);
     event ServiceFeeCollected(address indexed user, uint256 amount);
 
     /**
@@ -68,7 +60,7 @@ contract GaslessPaymentAccount {
         address user = msg.sender;
 
         // Update user transaction count
-        userTiers[user].totalTransactions++;
+        userTransactionCounts[user]++;
 
         // Check if transaction should be free
         bool isFree = _isTransactionFree(user);
@@ -80,11 +72,6 @@ contract GaslessPaymentAccount {
             if (serviceFee > 0) {
                 _collectServiceFee(user, serviceFee);
             }
-        }
-
-        // Update free transaction count if applicable
-        if (isFree) {
-            userTiers[user].freeTransactionsUsed++;
         }
 
         // Execute the original call
@@ -103,7 +90,7 @@ contract GaslessPaymentAccount {
         address user = msg.sender;
 
         // Update user transaction count
-        userTiers[user].totalTransactions++;
+        userTransactionCounts[user]++;
 
         // Check if transaction should be free
         bool isFree = _isTransactionFree(user);
@@ -115,11 +102,6 @@ contract GaslessPaymentAccount {
         if (!isFree) {
             serviceFee = _calculateServiceFee(amount);
             totalAmount = amount + serviceFee;
-        }
-
-        // Update free transaction count if applicable
-        if (isFree) {
-            userTiers[user].freeTransactionsUsed++;
         }
 
         // Transfer PYUSD from user to this contract
@@ -140,37 +122,10 @@ contract GaslessPaymentAccount {
     }
 
     /**
-     * @dev Upgrade user to paid tier
-     * @param subscriptionDuration Duration in days
-     */
-    function upgradeToPaidTier(uint256 subscriptionDuration) external {
-        address user = msg.sender;
-        uint256 expiry = block.timestamp + (subscriptionDuration * 1 days);
-
-        userTiers[user].isPaidTier = true;
-        userTiers[user].subscriptionExpiry = expiry;
-
-        emit UserUpgraded(user, expiry);
-    }
-
-    /**
-     * @dev Check if user's paid subscription is active
-     * @param user User address
-     * @return isActive True if subscription is active
-     */
-    function isPaidSubscriptionActive(
-        address user
-    ) external view returns (bool isActive) {
-        UserTier memory tier = userTiers[user];
-        return tier.isPaidTier && block.timestamp < tier.subscriptionExpiry;
-    }
-
-    /**
      * @dev Get user's tier status
      * @param user User address
      * @return freeTransactionsRemaining Number of free transactions remaining
      * @return nextFreeTransaction Number of transactions until next free one
-     * @return isPaidActive Whether paid subscription is active
      */
     function getTierStatus(
         address user
@@ -179,31 +134,18 @@ contract GaslessPaymentAccount {
         view
         returns (
             uint256 freeTransactionsRemaining,
-            uint256 nextFreeTransaction,
-            bool isPaidActive
+            uint256 nextFreeTransaction
         )
     {
-        UserTier memory tier = userTiers[user];
-
-        // Check if paid subscription is active
-        isPaidActive =
-            tier.isPaidTier &&
-            block.timestamp < tier.subscriptionExpiry;
-
-        if (isPaidActive) {
-            return (999, 0, true); // Unlimited for paid users
-        }
+        uint256 totalTransactions = userTransactionCounts[user];
 
         // Calculate free transactions remaining
-        if (tier.freeTransactionsUsed < FREE_TIER_LIMIT) {
-            freeTransactionsRemaining =
-                FREE_TIER_LIMIT -
-                tier.freeTransactionsUsed;
+        if (totalTransactions < FREE_TIER_LIMIT) {
+            freeTransactionsRemaining = FREE_TIER_LIMIT - totalTransactions;
             nextFreeTransaction = 1;
         } else {
             freeTransactionsRemaining = 0;
-            uint256 transactionsAfterLimit = tier.totalTransactions -
-                FREE_TIER_LIMIT;
+            uint256 transactionsAfterLimit = totalTransactions - FREE_TIER_LIMIT;
             uint256 remainder = transactionsAfterLimit % FREE_TIER_RATIO;
             nextFreeTransaction = remainder == 0
                 ? 1
@@ -219,21 +161,15 @@ contract GaslessPaymentAccount {
     function _isTransactionFree(
         address user
     ) internal view returns (bool isFree) {
-        UserTier memory tier = userTiers[user];
-
-        // If user has active paid subscription, all transactions are free
-        if (tier.isPaidTier && block.timestamp < tier.subscriptionExpiry) {
-            return true;
-        }
+        uint256 totalTransactions = userTransactionCounts[user];
 
         // If under free tier limit, transaction is free
-        if (tier.freeTransactionsUsed < FREE_TIER_LIMIT) {
+        if (totalTransactions < FREE_TIER_LIMIT) {
             return true;
         }
 
         // After limit, check if this is a "free" transaction (1 in 5)
-        uint256 transactionsAfterLimit = tier.totalTransactions -
-            FREE_TIER_LIMIT;
+        uint256 transactionsAfterLimit = totalTransactions - FREE_TIER_LIMIT;
         return transactionsAfterLimit % FREE_TIER_RATIO == 0;
     }
 

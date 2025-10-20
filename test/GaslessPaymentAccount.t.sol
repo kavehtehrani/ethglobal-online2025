@@ -57,10 +57,9 @@ contract GaslessPaymentAccountTest is Test {
             assertEq(pyusd.balanceOf(user1), initialBalance - 10e6);
 
             // Check tier status
-            (uint256 freeRemaining, , bool isPaid) = gaslessPaymentAccount
+            (uint256 freeRemaining, ) = gaslessPaymentAccount
                 .getTierStatus(user1);
             assertEq(freeRemaining, 4 - i);
-            assertFalse(isPaid);
         }
     }
 
@@ -119,25 +118,6 @@ contract GaslessPaymentAccountTest is Test {
         assertEq(pyusd.balanceOf(FEE_RECEIVER), finalFeeReceiverBalance);
     }
 
-    function test_PaidTierUpgrade() public {
-        // Upgrade to paid tier
-        vm.prank(user1);
-        gaslessPaymentAccount.upgradeToPaidTier(30); // 30 days
-
-        // Check subscription is active
-        assertTrue(gaslessPaymentAccount.isPaidSubscriptionActive(user1));
-
-        // All transactions should be free now
-        uint256 initialBalance = pyusd.balanceOf(user1);
-        uint256 initialFeeReceiverBalance = pyusd.balanceOf(FEE_RECEIVER);
-
-        vm.prank(user1);
-        gaslessPaymentAccount.executePYUSDTransfer(user2, 100e6);
-
-        // Should be free (no fee)
-        assertEq(pyusd.balanceOf(user1), initialBalance - 100e6);
-        assertEq(pyusd.balanceOf(FEE_RECEIVER), initialFeeReceiverBalance);
-    }
 
     function test_ServiceFeeCalculation() public {
         // Test service fee calculation by checking the constants
@@ -162,12 +142,10 @@ contract GaslessPaymentAccountTest is Test {
         // Initial status
         (
             uint256 freeRemaining,
-            uint256 nextFree,
-            bool isPaid
+            uint256 nextFree
         ) = gaslessPaymentAccount.getTierStatus(user1);
         assertEq(freeRemaining, 5);
         assertEq(nextFree, 1);
-        assertFalse(isPaid);
 
         // After 3 transactions
         for (uint256 i = 0; i < 3; i++) {
@@ -175,12 +153,9 @@ contract GaslessPaymentAccountTest is Test {
             gaslessPaymentAccount.executePYUSDTransfer(user2, 10e6);
         }
 
-        (freeRemaining, nextFree, isPaid) = gaslessPaymentAccount.getTierStatus(
-            user1
-        );
+        (freeRemaining, nextFree) = gaslessPaymentAccount.getTierStatus(user1);
         assertEq(freeRemaining, 2);
         assertEq(nextFree, 1);
-        assertFalse(isPaid);
 
         // After using all free transactions
         for (uint256 i = 0; i < 2; i++) {
@@ -188,26 +163,8 @@ contract GaslessPaymentAccountTest is Test {
             gaslessPaymentAccount.executePYUSDTransfer(user2, 10e6);
         }
 
-        (freeRemaining, nextFree, isPaid) = gaslessPaymentAccount.getTierStatus(
-            user1
-        );
+        (freeRemaining, nextFree) = gaslessPaymentAccount.getTierStatus(user1);
         assertEq(freeRemaining, 0);
         assertEq(nextFree, 1); // Next transaction (6th) is free
-        assertFalse(isPaid);
-    }
-
-    function test_Events() public {
-        // Test transaction event - we can't easily test events with vm.expectEmit
-        // since we don't have access to the contract's internal state
-        // Instead, we'll test that the transaction executes successfully
-        vm.prank(user1);
-        gaslessPaymentAccount.executePYUSDTransfer(user2, 10e6);
-
-        // Test upgrade event - same approach
-        vm.prank(user1);
-        gaslessPaymentAccount.upgradeToPaidTier(30);
-
-        // Verify the upgrade worked
-        assertTrue(gaslessPaymentAccount.isPaidSubscriptionActive(user1));
     }
 }
