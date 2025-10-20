@@ -3,12 +3,13 @@ import {
   http,
   encodeFunctionData,
   formatUnits,
+  parseUnits,
   createWalletClient,
   custom,
   Hex,
 } from "viem";
 import { sepolia } from "viem/chains";
-import { CONTRACTS, RPC_ENDPOINTS } from "./constants";
+import { CONTRACTS, RPC_ENDPOINTS, FEE_RECEIVER_ADDRESS } from "./constants";
 import { createSmartAccountClient } from "permissionless";
 import { toSimpleSmartAccount } from "permissionless/accounts";
 import { createPimlicoClient } from "permissionless/clients/pimlico";
@@ -98,6 +99,21 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ PYUSD balance check passed");
 
+  // Step 2.5: Calculate fee (0.5% with min/max limits)
+  const feeBasisPoints = 50; // 0.5%
+  const minFee = parseUnits("0.01", 6); // 0.01 PYUSD minimum
+  const maxFee = parseUnits("10", 6); // 10 PYUSD maximum
+
+  const calculatedFee = (amountInWei * BigInt(feeBasisPoints)) / BigInt(10000);
+  const feeAmount =
+    calculatedFee < minFee
+      ? minFee
+      : calculatedFee > maxFee
+      ? maxFee
+      : calculatedFee;
+
+  console.log("💰 Fee calculated:", formatUnits(feeAmount, 6), "PYUSD");
+
   // Step 3: Create wallet client from Privy wallet
   console.log("🔧 Creating wallet client from Privy wallet...");
 
@@ -163,7 +179,7 @@ export async function executePrivyGaslessPayment({
   console.log("🔐 Signing EIP-7702 authorization...");
 
   const authorization = await signAuthorization({
-    contractAddress: "0xe6Cae83BdE06E4c305530e199D7217f42808555B", // SimpleAccount implementation (from docs)
+    contractAddress: CONTRACTS.SIMPLE_ACCOUNT, // Use working SimpleAccount for EIP-7702 authorization
     chainId: sepolia.id,
     nonce: await publicClient.getTransactionCount({
       address: privyWallet.address,
@@ -172,9 +188,10 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ EIP-7702 authorization signed");
 
-  // Step 8: Build execute call data for our smart contract
-  // First, encode the PYUSD transfer call data
-  const pyusdTransferData = encodeFunctionData({
+  // Step 8: Build batch transfer calls
+  // For now, we'll always send both transfers (fee + recipient)
+  // In the future, we can add logic to check if transaction is free
+  const recipientTransferData = encodeFunctionData({
     abi: [
       {
         inputs: [
@@ -191,29 +208,27 @@ export async function executePrivyGaslessPayment({
     args: [recipientAddress, amountInWei],
   });
 
-  // Then encode the SimpleAccount execute call
-  const executeData = encodeFunctionData({
+  const feeTransferData = encodeFunctionData({
     abi: [
       {
         inputs: [
-          { internalType: "address", name: "target", type: "address" },
-          { internalType: "uint256", name: "value", type: "uint256" },
-          { internalType: "bytes", name: "data", type: "bytes" },
+          { internalType: "address", name: "to", type: "address" },
+          { internalType: "uint256", name: "amount", type: "uint256" },
         ],
-        name: "execute",
-        outputs: [],
+        name: "transfer",
+        outputs: [{ internalType: "bool", name: "", type: "bool" }],
         stateMutability: "nonpayable",
         type: "function",
       },
     ],
-    functionName: "execute",
-    args: [CONTRACTS.PYUSD, BigInt(0), pyusdTransferData],
+    functionName: "transfer",
+    args: [FEE_RECEIVER_ADDRESS, feeAmount],
   });
 
-  console.log("📝 Execute data built");
+  console.log("📝 Batch transfer data encoded");
 
-  // Step 9: Send sponsored transaction (following Pimlico repo exactly)
-  console.log("🚀 Sending sponsored transaction...");
+  // Step 9: Send sponsored transaction with batch calls
+  console.log("🚀 Sending sponsored batch transaction...");
 
   const sponsorshipPolicyId = process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID;
   if (!sponsorshipPolicyId) {
@@ -223,8 +238,13 @@ export async function executePrivyGaslessPayment({
   const hash = await smartAccountClient.sendTransaction({
     calls: [
       {
-        to: privyWallet.address, // The EOA that will act as smart account
-        data: executeData,
+        to: CONTRACTS.PYUSD,
+        data: feeTransferData,
+        value: BigInt(0),
+      },
+      {
+        to: CONTRACTS.PYUSD,
+        data: recipientTransferData,
         value: BigInt(0),
       },
     ],

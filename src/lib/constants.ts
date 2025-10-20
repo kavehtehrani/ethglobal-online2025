@@ -11,14 +11,19 @@ export const CONTRACTS = {
   // Our deployed GaslessPaymentAccount contract on Sepolia
   // GASLESS_PAYMENT_ACCOUNT:
   //   "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
-    GASLESS_PAYMENT_ACCOUNT:
-        "0x8dcdadd6222199af209ddc4454ab3df402454867" as `0x${string}`,
+  GASLESS_PAYMENT_ACCOUNT:
+    "0x8dcdadd6222199af209ddc4454ab3df402454867" as `0x${string}`,
 
-  // EIP-7702 GaslessPaymentAccount implementation address (must have bytecode on Sepolia).
+  // EIP-7702 implementation addresses (must have bytecode on Sepolia).
   // Prefer setting NEXT_PUBLIC_7702_IMPLEMENTATION in .env.local to your chosen implementation.
   GASLESS_PAYMENT_ACCOUNT_IMPLEMENTATION:
     (process.env.NEXT_PUBLIC_7702_IMPLEMENTATION as `0x${string}`) ||
     ("0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`),
+
+  // SimpleAccount implementations
+  SIMPLE_ACCOUNT: "0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`, // Standard SimpleAccount
+  SIMPLE_ACCOUNT_WITH_FEES:
+    "0x38F76e8fCC9b8528eEa61b11818e89eA0d8eb871" as `0x${string}`, // Will be updated after deployment
 
   // EntryPoint v0.7 address (used by Pimlico)
   ENTRY_POINT_V07:
@@ -38,7 +43,8 @@ export const PIMLICO = {
 
 // RPC endpoints
 export const RPC_ENDPOINTS = {
-  SEPOLIA: "https://sepolia.drpc.org",
+  // SEPOLIA: "https://sepolia.drpc.org",
+  SEPOLIA: "https://ethereum-sepolia-rpc.publicnode.com",
 } as const;
 
 // Token configuration

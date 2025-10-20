@@ -8,7 +8,12 @@ import {
   useWallets,
 } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
-import { createPublicClient, http, formatUnits } from "viem";
+import {
+  createPublicClient,
+  http,
+  formatUnits,
+  encodeFunctionData,
+} from "viem";
 import { CONTRACTS, RPC_ENDPOINTS, DEFAULT_TEST_VALUES } from "@/lib/constants";
 import { executePrivyGaslessPayment } from "@/lib/privyGaslessPayment";
 import {
@@ -346,6 +351,90 @@ export default function Home() {
         error: `Transfer failed: ${errorMessage}`,
       });
       notification.error(`Basic PYUSD transfer failed: ${errorMessage}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApprovePYUSD = async () => {
+    if (!privyWallet || !sendTransaction) {
+      setTransactionStatus({
+        isProcessing: false,
+        type: "",
+        message: "",
+        error: "Privy wallet or sendTransaction not available",
+      });
+      return;
+    }
+
+    setTransactionStatus({
+      isProcessing: true,
+      type: "PYUSD Approval",
+      message: "Approving PYUSD spending...",
+      error: null,
+    });
+    setIsLoading(true);
+
+    try {
+      // Calculate the amount needed (transfer amount + fee)
+      const transferAmount = parseFloat(amount || "1");
+      const amountInWei = BigInt(transferAmount * 10 ** 6);
+      const feeAmount = (amountInWei * BigInt(50)) / BigInt(10000); // 0.5% fee
+      const minFee = BigInt(1000000); // 0.01 PYUSD
+      const maxFee = BigInt(5000000000); // 5.00 PYUSD
+      const finalFee =
+        feeAmount < minFee ? minFee : feeAmount > maxFee ? maxFee : feeAmount;
+      const totalAmount = amountInWei + finalFee;
+
+      console.log("Approval details:", {
+        spender: CONTRACTS.SIMPLE_ACCOUNT_WITH_FEES,
+        amount: totalAmount.toString(),
+      });
+
+      const approveData = encodeFunctionData({
+        abi: [
+          {
+            inputs: [
+              { internalType: "address", name: "spender", type: "address" },
+              { internalType: "uint256", name: "amount", type: "uint256" },
+            ],
+            name: "approve",
+            outputs: [{ internalType: "bool", name: "", type: "bool" }],
+            stateMutability: "nonpayable",
+            type: "function",
+          },
+        ],
+        functionName: "approve",
+        args: [
+          CONTRACTS.SIMPLE_ACCOUNT_WITH_FEES as `0x${string}`,
+          totalAmount,
+        ],
+      });
+
+      const result = await sendTransaction({
+        to: CONTRACTS.PYUSD,
+        data: approveData,
+        chainId: sepolia.id,
+      });
+
+      setTransactionStatus({
+        isProcessing: false,
+        type: "PYUSD Approval",
+        message: "Approval Successful",
+        error: null,
+      });
+      notification.success(`PYUSD approval successful! Hash: ${result.hash}`);
+    } catch (error) {
+      console.error("PYUSD approval error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setTransactionStatus({
+        isProcessing: false,
+        type: "PYUSD Approval",
+        message: "",
+        error: `Approval failed: ${errorMessage}`,
+      });
+      notification.error(`PYUSD approval failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
