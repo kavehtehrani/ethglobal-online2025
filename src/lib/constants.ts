@@ -9,8 +9,10 @@ export const CONTRACTS = {
   PYUSD: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9" as `0x${string}`,
 
   // Our deployed GaslessPaymentAccount contract on Sepolia
-  GASLESS_PAYMENT_ACCOUNT:
-    "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
+  // GASLESS_PAYMENT_ACCOUNT:
+  //   "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
+    GASLESS_PAYMENT_ACCOUNT:
+        "0x8dcdadd6222199af209ddc4454ab3df402454867" as `0x${string}`,
 
   // EIP-7702 GaslessPaymentAccount implementation address (must have bytecode on Sepolia).
   // Prefer setting NEXT_PUBLIC_7702_IMPLEMENTATION in .env.local to your chosen implementation.

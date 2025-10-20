@@ -1,5 +1,6 @@
 import { network } from "hardhat";
-import { CONTRACTS, FEE_RECEIVER_ADDRESS } from "@/lib/constants";
+import { CONTRACTS, FEE_RECEIVER_ADDRESS } from "@/src/lib/constants";
+import { privateKeyToAccount } from "viem/accounts";
 
 async function main() {
   console.log("Deploying GaslessPaymentAccount...");
@@ -7,6 +8,24 @@ async function main() {
   // Contract addresses from constants
   const PYUSD_TOKEN = CONTRACTS.PYUSD;
   const FEE_RECEIVER = FEE_RECEIVER_ADDRESS;
+
+  // Load environment variables
+  const privateKey = process.env.PRIVATE_KEY;
+  const rpcUrl = process.env.SEPOLIA_RPC_URL;
+
+  if (!privateKey) {
+    throw new Error("PRIVATE_KEY environment variable is required");
+  }
+
+  if (!rpcUrl) {
+    throw new Error("SEPOLIA_RPC_URL environment variable is required");
+  }
+
+  console.log("Using RPC URL:", rpcUrl);
+  console.log(
+    "Deploying from account:",
+    privateKeyToAccount(privateKey as `0x${string}`).address
+  );
 
   // Connect to network and get viem
   const { viem } = await network.connect();

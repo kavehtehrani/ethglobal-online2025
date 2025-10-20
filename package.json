@@ -15,8 +15,8 @@
     "hardhat:deploy": "hardhat run scripts/deploy.ts --network localhost",
     "hardhat:deploy:test": "hardhat run scripts/deploy-test.ts --network localhost",
     "hardhat:deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
-    "hardhat:deploy:ignition": "hardhat ignition deploy ignition/modules/SimpleAccount.ts",
-    "hardhat:deploy:ignition:sepolia": "hardhat ignition deploy ignition/modules/SimpleAccount.ts --network sepolia"
+    "hardhat:deploy:ignition": "hardhat ignition deploy ignition/modules/GaslessPaymentAccount.ts",
+    "hardhat:deploy:ignition:sepolia": "hardhat ignition deploy ignition/modules/GaslessPaymentAccount.ts --network sepolia"
   },
   "dependencies": {
     "@aa-sdk/core": "^4.73.0",
@@ -34,7 +34,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@nomicfoundation/hardhat-ethers": "^4.0.2",
-    "@nomicfoundation/hardhat-ignition-viem": "^3.0.0",
+    "@nomicfoundation/hardhat-ignition": "^3.0.3",
+    "@nomicfoundation/hardhat-ignition-viem": "^3.0.3",
+    "@nomicfoundation/hardhat-keystore": "^3.0.1",
     "@nomicfoundation/hardhat-viem": "^3.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -45,6 +47,7 @@
     "ethers": "^6.15.0",
     "forge-std": "github:foundry-rs/forge-std#v1.9.7",
     "hardhat": "^3.0.7",
+    "hardhat-deploy": "^1.0.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -163,7 +163,7 @@ export async function executePrivyGaslessPayment({
   console.log("🔐 Signing EIP-7702 authorization...");
 
   const authorization = await signAuthorization({
-    contractAddress: "0xe6Cae83BdE06E4c305530e199D7217f42808555B", // Simple account implementation address
+    contractAddress: CONTRACTS.GASLESS_PAYMENT_ACCOUNT, // Our deployed GaslessPaymentAccount contract
     chainId: sepolia.id,
     nonce: await publicClient.getTransactionCount({
       address: privyWallet.address,
@@ -172,14 +172,25 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ EIP-7702 authorization signed");
 
-  // Step 8: Build transfer data
-  const transferData = encodeFunctionData({
-    abi: PYUSD_ABI,
-    functionName: "transfer",
+  // Step 8: Build execute call data for our smart contract
+  const executeData = encodeFunctionData({
+    abi: [
+      {
+        inputs: [
+          { internalType: "address", name: "to", type: "address" },
+          { internalType: "uint256", name: "amount", type: "uint256" },
+        ],
+        name: "execute",
+        outputs: [],
+        stateMutability: "nonpayable",
+        type: "function",
+      },
+    ],
+    functionName: "execute",
     args: [recipientAddress, amountInWei],
   });
 
-  console.log("📝 Transfer data built");
+  console.log("📝 Execute data built");
 
   // Step 9: Send sponsored transaction (following Pimlico repo exactly)
   console.log("🚀 Sending sponsored transaction...");
@@ -192,8 +203,8 @@ export async function executePrivyGaslessPayment({
   const hash = await smartAccountClient.sendTransaction({
     calls: [
       {
-        to: CONTRACTS.PYUSD,
-        data: transferData,
+        to: CONTRACTS.GASLESS_PAYMENT_ACCOUNT,
+        data: executeData,
         value: BigInt(0),
       },
     ],

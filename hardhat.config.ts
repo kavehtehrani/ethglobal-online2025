@@ -1,8 +1,10 @@
-import { HardhatUserConfig } from "hardhat/config";
+import { HardhatUserConfig, configVariable } from "hardhat/config";
 import hardhatViem from "@nomicfoundation/hardhat-viem";
+import hardhatIgnition from "@nomicfoundation/hardhat-ignition-viem";
+import hardhatKeystore from "@nomicfoundation/hardhat-keystore";
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatViem],
+  plugins: [hardhatViem, hardhatIgnition, hardhatKeystore],
   solidity: {
     version: "0.8.20",
     settings: {
@@ -19,10 +21,9 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       type: "http",
-      url:
-        process.env.SEPOLIA_RPC_URL ||
-        "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainType: "l1",
+      url: configVariable("SEPOLIA_RPC_URL"),
+      accounts: [configVariable("SEPOLIA_PRIVATE_KEY")],
       chainId: 11155111,
     },
   },

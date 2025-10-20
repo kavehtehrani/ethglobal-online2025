@@ -18,6 +18,7 @@ import {
 import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { TierStatusComponent } from "@/components/TierStatus";
 import { getTransactionLink, getAddressLink } from "@/lib/explorer";
 import {
   ArrowTopRightOnSquareIcon,
@@ -197,7 +198,7 @@ export default function Home() {
 
     try {
       const result = await testBasicPrivyTransaction({
-        privySendTransaction: async (tx: any) => {
+        privySendTransaction: async (tx: unknown) => {
           const result = await sendTransaction(tx);
           return result.hash;
         },
@@ -266,7 +267,7 @@ export default function Home() {
 
     try {
       const result = await testBasicPYUSDTransfer({
-        privySendTransaction: async (tx: any) => {
+        privySendTransaction: async (tx: unknown) => {
           const result = await sendTransaction(tx);
           return result.hash;
         },
@@ -448,7 +449,8 @@ export default function Home() {
             chainId: auth.chainId,
             nonce: auth.nonce,
           });
-          return result as unknown as string;
+          // Convert the signature result to a string if needed
+          return typeof result === "string" ? result : JSON.stringify(result);
         },
       });
 
@@ -855,9 +857,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* Tier Status and Transaction History */}
+        {/* Tier Status */}
         {authenticated && privyWallet && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6"></div>
+          <div className="mb-6">
+            <TierStatusComponent
+              userAddress={privyWallet.address as `0x${string}`}
+            />
+          </div>
         )}
 
         {/* Gasless Payment - Main Feature */}
@@ -1041,9 +1047,21 @@ export default function Home() {
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
-                Gasless PYUSD Payments Explained: EIP-7702 + Pimlico + Privy
+                Gasless PYUSD Payments Explained: Smart Contract + EIP-7702 +
+                Pimlico + Privy
               </h3>
               <div className="space-y-3 text-sm text-[var(--text-muted)]">
+                <div className="flex items-start gap-2">
+                  <span className="text-[var(--accent)]">✅</span>
+                  <div>
+                    <strong className="text-[var(--foreground)]">
+                      Smart Contract Fee System:
+                    </strong>{" "}
+                    Our deployed contract handles tiered fees automatically - 5
+                    free transactions, then 1 in 5 free, with service fees for
+                    paid transactions.
+                  </div>
+                </div>
                 <div className="flex items-start gap-2">
                   <span className="text-[var(--accent)]">✅</span>
                   <div>
@@ -1093,6 +1111,11 @@ export default function Home() {
                 🚀 Technical Details
               </h4>
               <div className="text-sm text-[var(--text-muted)] space-y-2">
+                <p>
+                  <strong>GaslessPaymentAccount:</strong> Our deployed smart
+                  contract that handles tiered fee logic, transaction tracking,
+                  and automatic fee collection
+                </p>
                 <p>
                   <strong>EIP-7702:</strong> Ethereum Improvement Proposal that
                   allows EOAs to delegate execution to smart contracts
@@ -1300,7 +1323,7 @@ export default function Home() {
                       Implementation:
                     </span>
                     <span className="text-[var(--accent)] font-mono text-xs">
-                      0xe6Cae83BdE06E4c305530e199D7217f42808555B
+                      {CONTRACTS.GASLESS_PAYMENT_ACCOUNT}
                     </span>
                   </div>
                 </div>
