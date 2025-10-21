@@ -40,3 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /.idea/
+
+# hardhat
+/artifacts
+/cache
+/typechain-types
+
+# hardhat ignition deployment artifacts
+/ignition/deployments/

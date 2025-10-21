@@ -1,0 +1,13 @@
+{
+  "GaslessPaymentAccountModule": {
+    "deployerAddress": "0xe6DdDcbb2848983D9cAaB715611849E579759CB0"
+  },
+  "SimpleAccountWithFeesModule": {
+    "feeBasisPoints": 50,
+    "minFee": "1000000",
+    "maxFee": "5000000000",
+    "freeTierLimit": 5,
+    "freeTierRatio": 5
+  },
+  "TransactionCounterModule": {}
+}

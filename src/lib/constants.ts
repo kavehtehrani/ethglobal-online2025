@@ -1,23 +1,37 @@
 // Network configuration
 export const SEPOLIA_CHAIN_ID = 11155111;
+export const FEE_RECEIVER_ADDRESS =
+  "0xe6DdDcbb2848983D9cAaB715611849E579759CB0" as `0x${string}`;
 
 // Contract addresses on Sepolia
 export const CONTRACTS = {
   // Official PYUSD contract on Sepolia (checksummed)
   PYUSD: "0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9" as `0x${string}`,
 
-  // Our deployed SimpleAccount contract on Sepolia
-  SIMPLE_ACCOUNT: "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
+  // Our deployed GaslessPaymentAccount contract on Sepolia
+  // GASLESS_PAYMENT_ACCOUNT:
+  //   "0x57192C5A0F4c44Aeb0208569345A7939a8c65578" as `0x${string}`,
+  GASLESS_PAYMENT_ACCOUNT:
+    "0x8dcdadd6222199af209ddc4454ab3df402454867" as `0x${string}`,
 
-  // EIP-7702 SimpleAccount implementation address (must have bytecode on Sepolia).
+  // EIP-7702 implementation addresses (must have bytecode on Sepolia).
   // Prefer setting NEXT_PUBLIC_7702_IMPLEMENTATION in .env.local to your chosen implementation.
-  SIMPLE_ACCOUNT_IMPLEMENTATION:
+  GASLESS_PAYMENT_ACCOUNT_IMPLEMENTATION:
     (process.env.NEXT_PUBLIC_7702_IMPLEMENTATION as `0x${string}`) ||
     ("0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`),
+
+  // SimpleAccount implementations
+  SIMPLE_ACCOUNT: "0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`, // Standard SimpleAccount
+  SIMPLE_ACCOUNT_WITH_FEES:
+    "0x38F76e8fCC9b8528eEa61b11818e89eA0d8eb871" as `0x${string}`, // TODO: REMOVE
 
   // EntryPoint v0.7 address (used by Pimlico)
   ENTRY_POINT_V07:
     "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as `0x${string}`,
+
+  // Transaction counter for free tier tracking
+  TRANSACTION_COUNTER:
+    "0xE6A149825907757801936FCdA35Ab96A13c8cB04" as `0x${string}`,
 } as const;
 
 // Pimlico configuration
@@ -33,7 +47,8 @@ export const PIMLICO = {
 
 // RPC endpoints
 export const RPC_ENDPOINTS = {
-  SEPOLIA: "https://sepolia.drpc.org",
+  // SEPOLIA: "https://sepolia.drpc.org",
+  SEPOLIA: "https://ethereum-sepolia-rpc.publicnode.com",
 } as const;
 
 // Token configuration
