@@ -170,7 +170,8 @@ export async function executePrivyGaslessPayment({
     isFree = true;
   } else {
     const transactionsAfterLimit = totalTransactions - freeTierLimit;
-    isFree = transactionsAfterLimit % freeTierRatio === 0;
+    const remainder = transactionsAfterLimit % freeTierRatio;
+    isFree = remainder === 0;
   }
 
   console.log("🎯 Transaction is free:", isFree);
@@ -179,6 +180,24 @@ export async function executePrivyGaslessPayment({
     freeTierLimit,
     freeTierRatio,
   });
+
+  // Debug logging for free tier calculation
+  console.log("🔍 DEBUG - Free tier calculation:");
+  console.log("  - totalTransactions:", totalTransactions);
+  console.log("  - freeTierLimit:", freeTierLimit);
+  console.log("  - freeTierRatio:", freeTierRatio);
+
+  if (totalTransactions < freeTierLimit) {
+    console.log("  - Status: Within free tier limit");
+    console.log("  - isFree: true");
+  } else {
+    const transactionsAfterLimit = totalTransactions - freeTierLimit;
+    const remainder = transactionsAfterLimit % freeTierRatio;
+    console.log("  - transactionsAfterLimit:", transactionsAfterLimit);
+    console.log("  - remainder:", remainder);
+    console.log("  - isFree:", remainder === 0);
+    console.log("  - Status:", remainder === 0 ? "Free (1 in N)" : "Paid");
+  }
 
   // Step 3: Create wallet client from Privy wallet
   console.log("🔧 Creating wallet client from Privy wallet...");
@@ -325,6 +344,18 @@ export async function executePrivyGaslessPayment({
   });
 
   console.log("📊 Added incrementCount to batch transaction");
+
+  // Debug logging for batch transaction
+  console.log("🔍 DEBUG - Batch transaction calls:");
+  console.log("  - Total calls:", calls.length);
+  console.log("  - isFree:", isFree);
+  calls.forEach((call, index) => {
+    console.log(`  - Call ${index + 1}:`, {
+      to: call.to,
+      data: call.data.slice(0, 10) + "...",
+      value: call.value.toString(),
+    });
+  });
 
   // Step 9: Send sponsored transaction
   console.log("🚀 Sending sponsored transaction...");

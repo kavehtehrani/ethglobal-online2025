@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
 import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
@@ -40,6 +44,7 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
   const [tierStatus, setTierStatus] = useState<TierStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isServiceConfigExpanded, setIsServiceConfigExpanded] = useState(false);
 
   const publicClient = createPublicClient({
     chain: sepolia,
@@ -70,6 +75,12 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
       const freeTierLimit = Number(tierConfig[0]);
       const freeTierRatio = Number(tierConfig[1]);
 
+      // Debug logging for tier status calculation
+      console.log("🔍 DEBUG - TierStatus calculation:");
+      console.log("  - totalTransactions:", totalTransactions);
+      console.log("  - freeTierLimit:", freeTierLimit);
+      console.log("  - freeTierRatio:", freeTierRatio);
+
       // Calculate tier status off-chain
       let isFree = false;
       let freeTransactionsRemaining = 0;
@@ -79,12 +90,23 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
         isFree = true;
         freeTransactionsRemaining = freeTierLimit - totalTransactions;
         nextFreeTransaction = 1;
+        console.log("  - Status: Within free tier limit");
+        console.log("  - isFree: true");
+        console.log(
+          "  - freeTransactionsRemaining:",
+          freeTransactionsRemaining
+        );
       } else {
-        isFree = false;
-        freeTransactionsRemaining = 0;
         const transactionsAfterLimit = totalTransactions - freeTierLimit;
         const remainder = transactionsAfterLimit % freeTierRatio;
+        isFree = remainder === 0;
+        freeTransactionsRemaining = 0;
         nextFreeTransaction = remainder === 0 ? 1 : freeTierRatio - remainder;
+        console.log("  - transactionsAfterLimit:", transactionsAfterLimit);
+        console.log("  - remainder:", remainder);
+        console.log("  - isFree:", isFree);
+        console.log("  - nextFreeTransaction:", nextFreeTransaction);
+        console.log("  - Status:", isFree ? "Free (1 in N)" : "Paid");
       }
 
       setTierStatus({
@@ -195,35 +217,50 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
 
       {/* Service Configuration Display */}
       <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-        <h4 className="text-sm font-medium text-[var(--foreground)] mb-2">
-          Service Configuration
-        </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
-          <div className="flex justify-between">
-            <span>Service Fee:</span>
-            <span className="font-mono">0.5%</span>
+        <button
+          onClick={() => setIsServiceConfigExpanded(!isServiceConfigExpanded)}
+          className="flex items-center justify-between w-full text-left hover:bg-[var(--card-bg)] rounded p-1 -m-1 transition-colors"
+        >
+          <h4 className="text-sm font-medium text-[var(--foreground)]">
+            Service Configuration
+          </h4>
+          {isServiceConfigExpanded ? (
+            <ChevronDownIcon className="h-4 w-4 text-[var(--text-secondary)]" />
+          ) : (
+            <ChevronRightIcon className="h-4 w-4 text-[var(--text-secondary)]" />
+          )}
+        </button>
+
+        {isServiceConfigExpanded && (
+          <div className="mt-3 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
+              <div className="flex justify-between">
+                <span>Service Fee:</span>
+                <span className="font-mono">0.5%</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Min Fee:</span>
+                <span className="font-mono">0.01 PYUSD</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Max Fee:</span>
+                <span className="font-mono">10 PYUSD</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Transaction Type:</span>
+                <span className="font-mono">
+                  {tierStatus.isFree ? "Single Transfer" : "Batch Transfer"}
+                </span>
+              </div>
+            </div>
+            <div className="text-xs text-[var(--text-secondary)]">
+              💡{" "}
+              {tierStatus.isFree
+                ? "Free transactions send only the amount to recipient"
+                : "Paid transactions send amount to recipient + fee to service"}
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span>Min Fee:</span>
-            <span className="font-mono">0.01 PYUSD</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Max Fee:</span>
-            <span className="font-mono">10 PYUSD</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Transaction Type:</span>
-            <span className="font-mono">
-              {tierStatus.isFree ? "Single Transfer" : "Batch Transfer"}
-            </span>
-          </div>
-        </div>
-        <div className="mt-3 text-xs text-[var(--text-secondary)]">
-          💡{" "}
-          {tierStatus.isFree
-            ? "Free transactions send only the amount to recipient"
-            : "Paid transactions send amount to recipient + fee to service"}
-        </div>
+        )}
       </div>
     </div>
   );

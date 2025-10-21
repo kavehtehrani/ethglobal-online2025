@@ -35,6 +35,27 @@ import {
 import { isAddress } from "viem";
 import { useSearchParams } from "next/navigation";
 
+// Transaction Counter ABI
+const TRANSACTION_COUNTER_ABI = [
+  {
+    name: "getCount",
+    type: "function",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "count", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    name: "getFreeTierConfig",
+    type: "function",
+    inputs: [],
+    outputs: [
+      { name: "limit", type: "uint256" },
+      { name: "ratio", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+] as const;
+
 export default function Home() {
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
@@ -48,6 +69,52 @@ export default function Home() {
   const [amount, setAmount] = useState<string>(
     DEFAULT_TEST_VALUES.AMOUNT_PYUSD
   );
+  const [isFreeTransaction, setIsFreeTransaction] = useState<boolean | null>(
+    null
+  );
+
+  // Function to check free tier status
+  const checkFreeTierStatus = async (userAddress: `0x${string}`) => {
+    try {
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http(RPC_ENDPOINTS.SEPOLIA),
+      });
+
+      const [userCount, tierConfig] = await Promise.all([
+        publicClient.readContract({
+          address: CONTRACTS.TRANSACTION_COUNTER,
+          abi: TRANSACTION_COUNTER_ABI,
+          functionName: "getCount",
+          args: [userAddress],
+        }),
+        publicClient.readContract({
+          address: CONTRACTS.TRANSACTION_COUNTER,
+          abi: TRANSACTION_COUNTER_ABI,
+          functionName: "getFreeTierConfig",
+          args: [],
+        }),
+      ]);
+
+      const totalTransactions = Number(userCount);
+      const freeTierLimit = Number(tierConfig[0]);
+      const freeTierRatio = Number(tierConfig[1]);
+
+      let isFree = false;
+      if (totalTransactions < freeTierLimit) {
+        isFree = true;
+      } else {
+        const transactionsAfterLimit = totalTransactions - freeTierLimit;
+        const remainder = transactionsAfterLimit % freeTierRatio;
+        isFree = remainder === 0;
+      }
+
+      setIsFreeTransaction(isFree);
+    } catch (error) {
+      console.error("Error checking free tier status:", error);
+      setIsFreeTransaction(null);
+    }
+  };
 
   // Parse URL parameters for payment links
   useEffect(() => {
@@ -62,6 +129,17 @@ export default function Home() {
       setAmount(urlAmount);
     }
   }, [searchParams]);
+
+  // Check free tier status when user is authenticated
+  useEffect(() => {
+    if (authenticated && wallets.length > 0) {
+      const userAddress = wallets[0].address as `0x${string}`;
+      checkFreeTierStatus(userAddress);
+    } else {
+      setIsFreeTransaction(null);
+    }
+  }, [authenticated, wallets]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
   const [pyusdBalance, setPyusdBalance] = useState<string>("0");
@@ -1137,12 +1215,28 @@ export default function Home() {
                   <span className="text-sm text-[var(--text-secondary)]">
                     Service fee (0.5%):
                   </span>
-                  <span className="text-sm font-mono text-[var(--foreground)]">
-                    {amount
-                      ? (parseFloat(amount) * 0.005).toFixed(6)
-                      : "0.000000"}{" "}
-                    PYUSD
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {isFreeTransaction === true ? (
+                      <>
+                        <span className="text-sm font-mono text-[var(--text-secondary)] line-through">
+                          {amount
+                            ? (parseFloat(amount) * 0.005).toFixed(6)
+                            : "0.000000"}{" "}
+                          PYUSD
+                        </span>
+                        <span className="text-sm font-mono font-bold text-green-600 dark:text-green-400">
+                          FREE
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-sm font-mono text-[var(--foreground)]">
+                        {amount
+                          ? (parseFloat(amount) * 0.005).toFixed(6)
+                          : "0.000000"}{" "}
+                        PYUSD
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="border-t border-[var(--card-border)] pt-2">
                   <div className="flex justify-between items-center">
@@ -1150,19 +1244,18 @@ export default function Home() {
                       Total amount needed:
                     </span>
                     <span className="text-sm font-mono font-medium text-[var(--accent)]">
-                      {amount
+                      {isFreeTransaction === true
+                        ? `${amount} PYUSD`
+                        : amount
                         ? (parseFloat(amount) * 1.005).toFixed(6)
                         : "0.000000"}{" "}
                       PYUSD
                     </span>
                   </div>
                 </div>
-                <div className="text-xs text-[var(--text-secondary)] mt-2">
-                  💡 This will send{" "}
-                  {amount && parseFloat(amount) * 0.005 > 0.01
-                    ? "2 separate transfers"
-                    : "1 transfer"}{" "}
-                  in a single gasless transaction
+                <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                  ✅ <strong>Gasless Transaction:</strong> This transaction will
+                  be sponsored by Pimlico (no gas fees required)
                 </div>
               </div>
             </div>
@@ -1356,9 +1449,7 @@ export default function Home() {
                   onClick={handleTestGaslessPYUSDTransfer}
                   disabled={isLoading || !privyWallet || !signAuthorization}
                 >
-                  {isLoading
-                    ? "Testing..."
-                    : "Test PYUSD Transfer (1 PYUSD + 0.005 PYUSD fee) - Gasless"}
+                  {isLoading ? "Testing..." : "Test PYUSD Transfer - Gasless"}
                 </button>
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
@@ -1368,8 +1459,8 @@ export default function Home() {
                 </p>
                 <p>
                   🟢 <strong>Gasless:</strong> Uses EIP-7702 + Pimlico
-                  sponsorship (no gas fees) - Sends 2 transfers: 1 PYUSD to
-                  recipient + 0.005 PYUSD fee
+                  sponsorship (no gas fees) - Fee depends on your free tier
+                  status
                 </p>
                 <p>
                   ✅ Test with gas first to verify basic Privy functionality
