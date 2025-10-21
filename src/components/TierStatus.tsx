@@ -126,7 +126,7 @@ export function TierStatusComponent({
     } finally {
       setLoading(false);
     }
-  }, [userAddress]);
+  }, [userAddress, publicClient]);
 
   useEffect(() => {
     if (userAddress) {

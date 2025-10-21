@@ -11,7 +11,7 @@ export default async function deployTransactionCounter(
   console.log("Deployer:", deployer);
 
   // Get parameters from ignition/parameters.json
-  const parameters = require("../ignition/parameters.json");
+  const parameters = await import("../ignition/parameters.json");
   const config = parameters.TransactionCounterModule;
 
   const transactionCounter = await deploy("TransactionCounter", {

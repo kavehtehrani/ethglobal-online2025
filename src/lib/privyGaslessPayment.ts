@@ -89,7 +89,7 @@ export async function executePrivyGaslessPayment({
     contractAddress: string;
     chainId: number;
     nonce: number;
-  }) => Promise<any>;
+  }) => Promise<`0x${string}`>;
 }) {
   console.log("🚀 Starting Privy gasless payment...");
   console.log("📊 Payment details:", {
@@ -205,7 +205,7 @@ export async function executePrivyGaslessPayment({
   const walletClient = createWalletClient({
     account: privyWallet.address as Hex,
     chain: sepolia,
-    transport: custom((await privyWallet.getEthereumProvider()) as any),
+    transport: custom((await privyWallet.getEthereumProvider()) as unknown),
   });
 
   console.log("✅ Wallet client created");

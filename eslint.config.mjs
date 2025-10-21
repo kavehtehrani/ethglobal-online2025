@@ -18,6 +18,12 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "artifacts/**",
+      "cache/**",
+      "deploy/**",
+      "ignition/**",
+      "contracts/**",
+      "test/**",
     ],
   },
 ];
