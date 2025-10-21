@@ -77,9 +77,9 @@ export const EIP7702 = {
   PRIMARY_TYPE: "Authorization",
 } as const;
 
-// Default test values (for development)
+// Default values - use environment variables if available, otherwise empty
 export const DEFAULT_TEST_VALUES = {
-  RECIPIENT_ADDRESS:
-    "0xB0826C6f126A04cEc28229D048911Fd8B9668F04" as `0x${string}`,
-  AMOUNT_PYUSD: "1",
+  RECIPIENT_ADDRESS: (process.env.NEXT_PUBLIC_DEFAULT_RECIPIENT ||
+    "") as `0x${string}`,
+  AMOUNT_PYUSD: process.env.NEXT_PUBLIC_DEFAULT_AMOUNT || "",
 } as const;

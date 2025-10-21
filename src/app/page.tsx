@@ -552,99 +552,6 @@ function HomeContent() {
     }
   };
 
-  const handleTestGaslessPYUSDTransfer = async () => {
-    if (!privyWallet || !signAuthorization) {
-      setTransactionStatus({
-        isProcessing: false,
-        type: "",
-        message: "",
-        error: "Privy wallet or EIP-7702 signing not available",
-      });
-      return;
-    }
-
-    // Validate recipient address
-    if (!recipient || !isAddress(recipient)) {
-      setTransactionStatus({
-        isProcessing: false,
-        type: "",
-        message: "",
-        error: "Please enter a valid recipient address",
-      });
-      notification.error("Please enter a valid recipient address");
-      return;
-    }
-
-    setTransactionStatus({
-      isProcessing: true,
-      type: "Test Gasless PYUSD Transfer",
-      message: `Sending 1 PYUSD (gasless test) to ${recipient}...`,
-      error: null,
-    });
-    setIsLoading(true);
-
-    try {
-      const result = await executePrivyGaslessPayment({
-        recipientAddress: recipient as `0x${string}`, // Use the same recipient as the main form
-        amount: "1", // 1 PYUSD test
-        privyWallet: {
-          address: privyWallet.address as `0x${string}`,
-          getEthereumProvider: privyWallet.getEthereumProvider,
-        },
-        signAuthorization: async (auth: {
-          contractAddress: string;
-          chainId: number;
-          nonce: number;
-        }) => {
-          return await signAuthorization({
-            contractAddress: auth.contractAddress as `0x${string}`,
-            chainId: auth.chainId,
-            nonce: auth.nonce,
-          });
-        },
-      });
-
-      if (result.success) {
-        setLastTransaction({
-          hash: result.txHash,
-          type: "Test Gasless PYUSD Transfer",
-          amount: result.amount,
-          token: result.token,
-          to: result.to,
-        });
-        setTransactionStatus({
-          isProcessing: false,
-          type: "Test Gasless PYUSD Transfer",
-          message: "Transaction Successful",
-          error: null,
-        });
-        notification.success(
-          `Test gasless PYUSD transfer successful! Sent ${result.amount} ${result.token} to ${result.to}`,
-          result.txHash
-        );
-        // Refresh balances after successful transaction
-        if (privyWallet?.address) {
-          fetchBalances(privyWallet.address as `0x${string}`);
-        }
-        // Trigger tier status refresh
-        triggerTierStatusRefresh();
-      }
-    } catch (error) {
-      console.error("Test gasless PYUSD transfer error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      setTransactionStatus({
-        isProcessing: false,
-        type: "Test Gasless PYUSD Transfer",
-        message: "",
-        error: `Transfer failed: ${errorMessage}`,
-      });
-      notification.error(`Test gasless PYUSD transfer failed: ${errorMessage}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleGaslessPayment = async () => {
     if (!recipient || !amount) {
       setTransactionStatus({
@@ -1527,13 +1434,10 @@ function HomeContent() {
 
         {/* Testing & Diagnostics Section */}
         <CollapsibleSection title="Testing & Diagnostics" icon="🧪">
-          <div className="space-y-4">
+          <div className="space-y-4 mt-2">
             {/* Basic Transaction Tests */}
             <div>
-              <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
-                Transaction Tests
-              </h3>
-              <p className="text-[var(--text-muted)] mb-3">
+              <p className="text-[var(--text-muted)] mt-3 mb-3">
                 Test different transaction types to verify Privy wallet
                 functionality
               </p>
@@ -1556,13 +1460,6 @@ function HomeContent() {
                     ? "Testing..."
                     : "Test PYUSD Transfer (1 PYUSD) - With Gas"}
                 </button>
-                <button
-                  className="bg-[var(--accent)] text-white px-4 py-2 rounded hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors"
-                  onClick={handleTestGaslessPYUSDTransfer}
-                  disabled={isLoading || !privyWallet || !signAuthorization}
-                >
-                  {isLoading ? "Testing..." : "Test PYUSD Transfer - Gasless"}
-                </button>
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
                 <p>
@@ -1570,16 +1467,9 @@ function HomeContent() {
                   pay gas fees
                 </p>
                 <p>
-                  🟢 <strong>Gasless:</strong> Uses EIP-7702 + Pimlico
-                  sponsorship (no gas fees) - Fee depends on your free tier
-                  status
-                </p>
-                <p>
                   ✅ Test with gas first to verify basic Privy functionality
                 </p>
-                <p>
-                  ✅ Test gasless to verify EIP-7702 and Pimlico integration
-                </p>
+                <p>💡 Use the main form above for gasless transactions</p>
               </div>
             </div>
 
