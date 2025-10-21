@@ -21,7 +21,7 @@ export function CollapsibleSection({
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-[var(--card-border)] transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 transition-colors rounded-t-lg"
       >
         <div className="flex items-center gap-2">
           <span className="text-lg">{icon}</span>

@@ -222,7 +222,7 @@ export function TierStatusComponent({
         <p
           className={`text-sm ${
             tierStatus.isFree
-              ? "text-green-700 dark:text-green-400"
+              ? "text-green-900 dark:text-green-400"
               : "text-yellow-700 dark:text-yellow-400"
           }`}
         >

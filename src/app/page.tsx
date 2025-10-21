@@ -182,6 +182,8 @@ export default function Home() {
   });
   const [showPaymentLink, setShowPaymentLink] = useState(false);
   const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
+  const [paymentLinkRecipient, setPaymentLinkRecipient] = useState<string>("");
+  const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>("");
 
   // Get the embedded wallet or any Privy wallet
   const embeddedWallet = wallets.find(
@@ -741,12 +743,12 @@ export default function Home() {
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
 
-    if (recipient && isAddress(recipient)) {
-      params.set("to", recipient);
+    if (paymentLinkRecipient && isAddress(paymentLinkRecipient)) {
+      params.set("to", paymentLinkRecipient);
     }
 
-    if (amount && !isNaN(parseFloat(amount))) {
-      params.set("amount", amount);
+    if (paymentLinkAmount && !isNaN(parseFloat(paymentLinkAmount))) {
+      params.set("amount", paymentLinkAmount);
     }
 
     return `${baseUrl}?${params.toString()}`;
@@ -907,11 +909,13 @@ export default function Home() {
 
         {/* Balance Display */}
         {authenticated && privyWallet && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-            <div className="flex justify-between items-center mb-3">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
+            <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
               <h2 className="text-xl font-bold text-[var(--foreground)]">
                 💰 Your Balances
               </h2>
+            </div>
+            <div className="p-4">
               <button
                 onClick={() =>
                   fetchBalances(privyWallet.address as `0x${string}`)
@@ -993,100 +997,103 @@ export default function Home() {
           transactionStatus.error ||
           transactionStatus.message ||
           lastTransaction) && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-            <h2 className="text-xl font-bold text-[var(--foreground)] mb-3">
-              📊 Transaction Status
-            </h2>
-
-            {/* Current Transaction Status */}
-            {transactionStatus.isProcessing && (
-              <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
-                  <div>
-                    <h3 className="font-semibold text-[var(--foreground)]">
-                      {transactionStatus.type}
-                    </h3>
-                    <p className="text-[var(--text-muted)]">
-                      {transactionStatus.message}
-                    </p>
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
+            <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
+              <h2 className="text-xl font-bold text-[var(--foreground)]">
+                📊 Transaction Status
+              </h2>
+            </div>
+            <div className="p-4">
+              {/* Current Transaction Status */}
+              {transactionStatus.isProcessing && (
+                <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
+                    <div>
+                      <h3 className="font-semibold text-[var(--foreground)]">
+                        {transactionStatus.type}
+                      </h3>
+                      <p className="text-[var(--text-muted)]">
+                        {transactionStatus.message}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {transactionStatus.error && (
-              <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="text-[var(--error)] text-xl">❌</div>
-                  <div>
-                    <h3 className="font-semibold text-[var(--foreground)]">
-                      Transaction Failed
-                    </h3>
-                    <p className="text-[var(--error)]">
-                      {transactionStatus.error}
-                    </p>
+              {transactionStatus.error && (
+                <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-[var(--error)] text-xl">❌</div>
+                    <div>
+                      <h3 className="font-semibold text-[var(--foreground)]">
+                        Transaction Failed
+                      </h3>
+                      <p className="text-[var(--error)]">
+                        {transactionStatus.error}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Last Transaction Details */}
-            {lastTransaction && (
-              <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
-                <h3 className="font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
-                  ✅ Transaction Successful
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--foreground)]">
-                      Type:
-                    </span>
-                    <span className="text-[var(--text-muted)]">
-                      {lastTransaction.type}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--foreground)]">
-                      Amount:
-                    </span>
-                    <span className="text-[var(--text-muted)]">
-                      {lastTransaction.amount} {lastTransaction.token}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--foreground)]">
-                      To:
-                    </span>
-                    <a
-                      href={getAddressLink(lastTransaction.to)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
-                    >
-                      {lastTransaction.to.slice(0, 6)}...
-                      {lastTransaction.to.slice(-4)}
-                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                    </a>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--foreground)]">
-                      Transaction Hash:
-                    </span>
-                    <a
-                      href={getTransactionLink(lastTransaction.hash)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1"
-                    >
-                      {lastTransaction.hash.slice(0, 10)}...
-                      {lastTransaction.hash.slice(-8)}
-                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                    </a>
+              {/* Last Transaction Details */}
+              {lastTransaction && (
+                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
+                  <h3 className="font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
+                    ✅ Transaction Successful
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-[var(--foreground)]">
+                        Type:
+                      </span>
+                      <span className="text-[var(--text-muted)]">
+                        {lastTransaction.type}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-[var(--foreground)]">
+                        Amount:
+                      </span>
+                      <span className="text-[var(--text-muted)]">
+                        {lastTransaction.amount} {lastTransaction.token}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-[var(--foreground)]">
+                        To:
+                      </span>
+                      <a
+                        href={getAddressLink(lastTransaction.to)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
+                      >
+                        {lastTransaction.to.slice(0, 6)}...
+                        {lastTransaction.to.slice(-4)}
+                        <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                      </a>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-[var(--foreground)]">
+                        Transaction Hash:
+                      </span>
+                      <a
+                        href={getTransactionLink(lastTransaction.hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1"
+                      >
+                        {lastTransaction.hash.slice(0, 10)}...
+                        {lastTransaction.hash.slice(-8)}
+                        <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -1095,104 +1102,51 @@ export default function Home() {
           <div className="mb-6">
             <TierStatusComponent
               userAddress={privyWallet.address as `0x${string}`}
-              onTransactionComplete={transactionCompleted}
+              onTransactionComplete={triggerTierStatusRefresh}
             />
           </div>
         )}
 
         {/* Gasless Payment - Main Feature */}
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-          <h2 className="text-xl font-bold mb-3 text-[var(--foreground)]">
-            Send PYUSD (Gasless)
-          </h2>
-          <div className="space-y-3">
-            {/* Desktop: Single row layout */}
-            <div className="hidden lg:flex gap-4 items-end">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Recipient Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={recipient}
-                    onChange={(e) =>
-                      setRecipient(e.target.value as `0x${string}`)
-                    }
-                    placeholder="Enter recipient address"
-                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                      recipient && isAddress(recipient)
-                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : recipient && !isAddress(recipient)
-                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                    }`}
-                  />
-                  {recipient && isAddress(recipient) && (
-                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                  )}
-                  {recipient && !isAddress(recipient) && (
-                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                  )}
-                </div>
-              </div>
-              <div className="w-48">
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Amount (PYUSD)
-                </label>
-                <input
-                  type="text"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount (PYUSD)"
-                  className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-                />
-              </div>
-              <button
-                className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
-                onClick={handleGaslessPayment}
-                disabled={isLoading || !authenticated}
-              >
-                {isLoading
-                  ? "Processing..."
-                  : !authenticated
-                  ? "Login First"
-                  : "Send PYUSD"}
-              </button>
-            </div>
-
-            {/* Mobile/Tablet: Two row layout */}
-            <div className="lg:hidden space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Recipient Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={recipient}
-                    onChange={(e) =>
-                      setRecipient(e.target.value as `0x${string}`)
-                    }
-                    placeholder="Enter recipient address"
-                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                      recipient && isAddress(recipient)
-                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : recipient && !isAddress(recipient)
-                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                    }`}
-                  />
-                  {recipient && isAddress(recipient) && (
-                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                  )}
-                  {recipient && !isAddress(recipient) && (
-                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-3 items-end">
+        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
+          <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
+            <h2 className="text-xl font-bold text-[var(--foreground)]">
+              Send PYUSD (Gasless)
+            </h2>
+          </div>
+          <div className="p-4">
+            <div className="space-y-3">
+              {/* Desktop: Single row layout */}
+              <div className="hidden lg:flex gap-4 items-end">
                 <div className="flex-1">
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Recipient Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={recipient}
+                      onChange={(e) =>
+                        setRecipient(e.target.value as `0x${string}`)
+                      }
+                      placeholder="Enter recipient address"
+                      className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                        recipient && isAddress(recipient)
+                          ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                          : recipient && !isAddress(recipient)
+                          ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                          : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                      }`}
+                    />
+                    {recipient && isAddress(recipient) && (
+                      <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                    )}
+                    {recipient && !isAddress(recipient) && (
+                      <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                    )}
+                  </div>
+                </div>
+                <div className="w-48">
                   <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
                     Amount (PYUSD)
                   </label>
@@ -1216,116 +1170,252 @@ export default function Home() {
                     : "Send PYUSD"}
                 </button>
               </div>
-            </div>
-          </div>
 
-          {/* Transaction Breakdown */}
-          {amount && recipient && isAddress(recipient) && (
-            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-              <h3 className="text-sm font-medium text-[var(--foreground)] mb-3">
-                📊 Transaction Breakdown
-              </h3>
-              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-[var(--text-secondary)]">
-                    Transfer to recipient:
-                  </span>
-                  <span className="text-sm font-mono text-[var(--foreground)]">
-                    {amount} PYUSD
-                  </span>
+              {/* Mobile/Tablet: Two row layout */}
+              <div className="lg:hidden space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Recipient Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={recipient}
+                      onChange={(e) =>
+                        setRecipient(e.target.value as `0x${string}`)
+                      }
+                      placeholder="Enter recipient address"
+                      className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                        recipient && isAddress(recipient)
+                          ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                          : recipient && !isAddress(recipient)
+                          ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                          : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                      }`}
+                    />
+                    {recipient && isAddress(recipient) && (
+                      <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                    )}
+                    {recipient && !isAddress(recipient) && (
+                      <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                    )}
+                  </div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-[var(--text-secondary)]">
-                    Service fee (0.5%):
-                  </span>
-                  <div className="flex items-center gap-2">
-                    {isFreeTransaction === true ? (
-                      <>
-                        <span className="text-sm font-mono text-[var(--text-secondary)] line-through">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                      Amount (PYUSD)
+                    </label>
+                    <input
+                      type="text"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Enter amount (PYUSD)"
+                      className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
+                    />
+                  </div>
+                  <button
+                    className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+                    onClick={handleGaslessPayment}
+                    disabled={isLoading || !authenticated}
+                  >
+                    {isLoading
+                      ? "Processing..."
+                      : !authenticated
+                      ? "Login First"
+                      : "Send PYUSD"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Breakdown */}
+            {amount && recipient && isAddress(recipient) && (
+              <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+                <h3 className="text-sm font-medium text-[var(--foreground)] mb-3">
+                  📊 Transaction Breakdown
+                </h3>
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-[var(--text-secondary)]">
+                      Transfer to recipient:
+                    </span>
+                    <span className="text-sm font-mono text-[var(--foreground)]">
+                      {amount} PYUSD
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-[var(--text-secondary)]">
+                      Service fee (0.5%):
+                    </span>
+                    <div className="flex items-center gap-2">
+                      {isFreeTransaction === true ? (
+                        <>
+                          <span className="text-sm font-mono text-[var(--text-secondary)] line-through">
+                            {amount
+                              ? (parseFloat(amount) * 0.005).toFixed(6)
+                              : "0.000000"}{" "}
+                            PYUSD
+                          </span>
+                          <span className="text-sm font-mono font-bold text-green-600 dark:text-green-400">
+                            FREE
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-sm font-mono text-[var(--foreground)]">
                           {amount
                             ? (parseFloat(amount) * 0.005).toFixed(6)
                             : "0.000000"}{" "}
                           PYUSD
                         </span>
-                        <span className="text-sm font-mono font-bold text-green-600 dark:text-green-400">
-                          FREE
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-sm font-mono text-[var(--foreground)]">
-                        {amount
-                          ? (parseFloat(amount) * 0.005).toFixed(6)
+                      )}
+                    </div>
+                  </div>
+                  <div className="border-t border-[var(--card-border)] pt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-[var(--foreground)]">
+                        Total amount needed:
+                      </span>
+                      <span className="text-sm font-mono font-medium text-[var(--accent)]">
+                        {isFreeTransaction === true
+                          ? `${amount} PYUSD`
+                          : amount
+                          ? (parseFloat(amount) * 1.005).toFixed(6)
                           : "0.000000"}{" "}
                         PYUSD
                       </span>
-                    )}
+                    </div>
                   </div>
-                </div>
-                <div className="border-t border-[var(--card-border)] pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-[var(--foreground)]">
-                      Total amount needed:
-                    </span>
-                    <span className="text-sm font-mono font-medium text-[var(--accent)]">
-                      {isFreeTransaction === true
-                        ? `${amount} PYUSD`
-                        : amount
-                        ? (parseFloat(amount) * 1.005).toFixed(6)
-                        : "0.000000"}{" "}
-                      PYUSD
-                    </span>
+                  <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                    ✅ <strong>Gasless Transaction:</strong> This transaction
+                    will be sponsored (no gas fees required)
                   </div>
-                </div>
-                <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
-                  ✅ <strong>Gasless Transaction:</strong> This transaction will
-                  be sponsored (no gas fees required)
                 </div>
               </div>
-            </div>
-          )}
-
+            )}
+          </div>
         </div>
 
         {/* Request Payment Link Section */}
-        {(recipient || amount) && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <ShareIcon className="h-5 w-5 text-[var(--accent)]" />
-              <h2 className="text-lg font-bold text-[var(--foreground)]">
-                Request Payment Link
-              </h2>
-            </div>
-            <p className="text-sm text-[var(--text-secondary)] mb-4">
-              Generate a payment link that pre-fills the recipient and amount for easy sharing.
+        <CollapsibleSection title="Request Payment Link" icon="🔗">
+          <div className="space-y-3">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Generate a payment link that pre-fills the recipient and amount
+              for easy sharing.
             </p>
-            
-            <div className="flex items-center justify-between items-center">
+
+            {/* Desktop: Single row layout */}
+            <div className="hidden lg:flex gap-4 items-end">
               <div className="flex-1">
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Recipient Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={paymentLinkRecipient}
+                    onChange={(e) => setPaymentLinkRecipient(e.target.value)}
+                    placeholder="Enter recipient address"
+                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                      paymentLinkRecipient && isAddress(paymentLinkRecipient)
+                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : paymentLinkRecipient &&
+                          !isAddress(paymentLinkRecipient)
+                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                    }`}
+                  />
+                  {paymentLinkRecipient && isAddress(paymentLinkRecipient) && (
+                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                  )}
+                  {paymentLinkRecipient && !isAddress(paymentLinkRecipient) && (
+                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                  )}
+                </div>
+              </div>
+              <div className="w-48">
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Amount (PYUSD)
+                </label>
+                <input
+                  type="text"
+                  value={paymentLinkAmount}
+                  onChange={(e) => setPaymentLinkAmount(e.target.value)}
+                  placeholder="Enter amount (PYUSD)"
+                  className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
+                />
+              </div>
+              <button
+                onClick={() => setShowPaymentLink(!showPaymentLink)}
+                disabled={
+                  !paymentLinkRecipient ||
+                  !paymentLinkAmount ||
+                  !isAddress(paymentLinkRecipient)
+                }
+                className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+              >
+                Generate Link
+              </button>
+            </div>
+
+            {/* Mobile/Tablet: Two row layout */}
+            <div className="lg:hidden space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                  Recipient Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={paymentLinkRecipient}
+                    onChange={(e) => setPaymentLinkRecipient(e.target.value)}
+                    placeholder="Enter recipient address"
+                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
+                      paymentLinkRecipient && isAddress(paymentLinkRecipient)
+                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : paymentLinkRecipient &&
+                          !isAddress(paymentLinkRecipient)
+                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
+                    }`}
+                  />
+                  {paymentLinkRecipient && isAddress(paymentLinkRecipient) && (
+                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
+                  )}
+                  {paymentLinkRecipient && !isAddress(paymentLinkRecipient) && (
+                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                    Amount (PYUSD)
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentLinkAmount}
+                    onChange={(e) => setPaymentLinkAmount(e.target.value)}
+                    placeholder="Enter amount (PYUSD)"
+                    className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
+                  />
+                </div>
                 <button
                   onClick={() => setShowPaymentLink(!showPaymentLink)}
-                  className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors font-medium"
+                  disabled={
+                    !paymentLinkRecipient ||
+                    !paymentLinkAmount ||
+                    !isAddress(paymentLinkRecipient)
+                  }
+                  className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap self-end"
                 >
-                  {showPaymentLink ? "Hide" : "Generate"} Payment Link
+                  Generate Link
                 </button>
               </div>
-              {showPaymentLink && (
-                <button
-                  onClick={copyPaymentLink}
-                  disabled={paymentLinkCopied}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    paymentLinkCopied
-                      ? "bg-[var(--success)] text-white"
-                      : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                  }`}
-                >
-                  <ClipboardDocumentIcon className="h-4 w-4" />
-                  {paymentLinkCopied ? "Copied!" : "Copy Link"}
-                </button>
-              )}
             </div>
 
             {showPaymentLink && (
-              <div className="mt-4 p-4 bg-[var(--background)] border border-[var(--card-border)] rounded-lg">
+              <div className="p-4 bg-[var(--background)] border border-[var(--card-border)] rounded-lg">
                 <p className="text-xs text-[var(--text-secondary)] mb-3">
                   Share this link to pre-fill the payment form:
                 </p>
@@ -1338,19 +1428,25 @@ export default function Home() {
                   />
                   <button
                     onClick={copyPaymentLink}
-                    className="p-2 text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                    title="Copy link"
+                    disabled={paymentLinkCopied}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      paymentLinkCopied
+                        ? "bg-[var(--success)] text-white"
+                        : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                    }`}
                   >
                     <ClipboardDocumentIcon className="h-4 w-4" />
+                    {paymentLinkCopied ? "Copied!" : "Copy"}
                   </button>
                 </div>
                 <div className="mt-2 text-xs text-[var(--text-secondary)]">
-                  💡 Recipients can click this link to automatically fill in the payment details
+                  💡 Recipients can click this link to automatically fill in the
+                  payment details
                 </div>
               </div>
             )}
           </div>
-        )}
+        </CollapsibleSection>
 
         {/* How does this work? */}
         <CollapsibleSection title="How does this work?" icon="❓">
