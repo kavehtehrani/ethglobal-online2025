@@ -72,6 +72,13 @@ export default function Home() {
   const [isFreeTransaction, setIsFreeTransaction] = useState<boolean | null>(
     null
   );
+  const [transactionCompleted, setTransactionCompleted] = useState<number>(0);
+
+  // Function to trigger tier status refresh after transaction completion
+  const triggerTierStatusRefresh = () => {
+    console.log("🔄 Triggering tier status refresh");
+    setTransactionCompleted((prev) => prev + 1);
+  };
 
   // Function to check free tier status
   const checkFreeTierStatus = async (userAddress: `0x${string}`) => {
@@ -139,6 +146,17 @@ export default function Home() {
       setIsFreeTransaction(null);
     }
   }, [authenticated, wallets]);
+
+  // Refresh free tier status after transaction completion
+  useEffect(() => {
+    if (authenticated && wallets.length > 0 && transactionCompleted > 0) {
+      const userAddress = wallets[0].address as `0x${string}`;
+      console.log(
+        "🔄 Refreshing free tier status after transaction completion"
+      );
+      checkFreeTierStatus(userAddress);
+    }
+  }, [transactionCompleted, authenticated, wallets]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
@@ -592,6 +610,8 @@ export default function Home() {
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
         }
+        // Trigger tier status refresh
+        triggerTierStatusRefresh();
       }
     } catch (error) {
       console.error("Test gasless PYUSD transfer error:", error);
@@ -689,6 +709,8 @@ export default function Home() {
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
         }
+        // Trigger tier status refresh
+        triggerTierStatusRefresh();
       } else {
         setTransactionStatus({
           isProcessing: false,
@@ -1073,6 +1095,7 @@ export default function Home() {
           <div className="mb-6">
             <TierStatusComponent
               userAddress={privyWallet.address as `0x${string}`}
+              onTransactionComplete={transactionCompleted}
             />
           </div>
         )}
@@ -1255,68 +1278,79 @@ export default function Home() {
                 </div>
                 <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
                   ✅ <strong>Gasless Transaction:</strong> This transaction will
-                  be sponsored by Pimlico (no gas fees required)
+                  be sponsored (no gas fees required)
                 </div>
               </div>
             </div>
           )}
 
-          {/* Payment Link Section */}
-          {(recipient || amount) && (
-            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ShareIcon className="h-5 w-5 text-[var(--accent)]" />
-                  <span className="text-sm font-medium text-[var(--foreground)]">
-                    Share Payment Link
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowPaymentLink(!showPaymentLink)}
-                    className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                  >
-                    {showPaymentLink ? "Hide" : "Show"} Link
-                  </button>
-                  <button
-                    onClick={copyPaymentLink}
-                    disabled={paymentLinkCopied}
-                    className={`flex items-center gap-1 px-3 py-1 rounded text-sm transition-colors ${
-                      paymentLinkCopied
-                        ? "bg-[var(--success)] text-white"
-                        : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                    }`}
-                  >
-                    <ClipboardDocumentIcon className="h-4 w-4" />
-                    {paymentLinkCopied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-              </div>
+        </div>
 
+        {/* Request Payment Link Section */}
+        {(recipient || amount) && (
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <ShareIcon className="h-5 w-5 text-[var(--accent)]" />
+              <h2 className="text-lg font-bold text-[var(--foreground)]">
+                Request Payment Link
+              </h2>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">
+              Generate a payment link that pre-fills the recipient and amount for easy sharing.
+            </p>
+            
+            <div className="flex items-center justify-between items-center">
+              <div className="flex-1">
+                <button
+                  onClick={() => setShowPaymentLink(!showPaymentLink)}
+                  className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors font-medium"
+                >
+                  {showPaymentLink ? "Hide" : "Generate"} Payment Link
+                </button>
+              </div>
               {showPaymentLink && (
-                <div className="mt-3 p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-                  <p className="text-xs text-[var(--text-muted)] mb-2">
-                    Share this link to pre-fill the payment form:
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={generatePaymentLink()}
-                      readOnly
-                      className="flex-1 px-2 py-1 text-xs bg-[var(--background)] border border-[var(--card-border)] rounded text-[var(--foreground)] font-mono"
-                    />
-                    <button
-                      onClick={copyPaymentLink}
-                      className="p-1 text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-                    >
-                      <ClipboardDocumentIcon className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={copyPaymentLink}
+                  disabled={paymentLinkCopied}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    paymentLinkCopied
+                      ? "bg-[var(--success)] text-white"
+                      : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                  }`}
+                >
+                  <ClipboardDocumentIcon className="h-4 w-4" />
+                  {paymentLinkCopied ? "Copied!" : "Copy Link"}
+                </button>
               )}
             </div>
-          )}
-        </div>
+
+            {showPaymentLink && (
+              <div className="mt-4 p-4 bg-[var(--background)] border border-[var(--card-border)] rounded-lg">
+                <p className="text-xs text-[var(--text-secondary)] mb-3">
+                  Share this link to pre-fill the payment form:
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={generatePaymentLink()}
+                    readOnly
+                    className="flex-1 px-3 py-2 text-sm bg-[var(--card-bg)] border border-[var(--card-border)] rounded text-[var(--foreground)] font-mono"
+                  />
+                  <button
+                    onClick={copyPaymentLink}
+                    className="p-2 text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
+                    title="Copy link"
+                  >
+                    <ClipboardDocumentIcon className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="mt-2 text-xs text-[var(--text-secondary)]">
+                  💡 Recipients can click this link to automatically fill in the payment details
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* How does this work? */}
         <CollapsibleSection title="How does this work?" icon="❓">

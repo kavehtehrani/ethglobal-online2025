@@ -12,6 +12,7 @@ import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
 
 interface TierStatusProps {
   userAddress: `0x${string}`;
+  onTransactionComplete?: () => void;
 }
 
 interface TierStatus {
@@ -40,7 +41,10 @@ const TRANSACTION_COUNTER_ABI = [
   },
 ] as const;
 
-export function TierStatusComponent({ userAddress }: TierStatusProps) {
+export function TierStatusComponent({
+  userAddress,
+  onTransactionComplete,
+}: TierStatusProps) {
   const [tierStatus, setTierStatus] = useState<TierStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +134,19 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
     }
   }, [userAddress, fetchTierStatus]);
 
+  // Listen for transaction completion and refresh tier status
+  useEffect(() => {
+    if (onTransactionComplete) {
+      // Add a small delay to ensure the transaction is confirmed on-chain
+      const timeoutId = setTimeout(() => {
+        console.log("🔄 Refreshing tier status after transaction completion");
+        fetchTierStatus();
+      }, 2000); // 2 second delay
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [onTransactionComplete, fetchTierStatus]);
+
   if (loading) {
     return (
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
@@ -209,7 +226,9 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
               : "text-yellow-700 dark:text-yellow-400"
           }`}
         >
-          {tierStatus.freeTransactionsRemaining > 0
+          {tierStatus.isFree
+            ? "This transaction is on us! 🎉"
+            : tierStatus.freeTransactionsRemaining > 0
             ? `${tierStatus.freeTransactionsRemaining} free transactions remaining`
             : `Next free transaction in ${tierStatus.nextFreeTransaction} transactions`}
         </p>
