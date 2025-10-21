@@ -1118,6 +1118,56 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Transaction Breakdown */}
+          {amount && recipient && isAddress(recipient) && (
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <h3 className="text-sm font-medium text-[var(--foreground)] mb-3">
+                📊 Transaction Breakdown
+              </h3>
+              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[var(--text-secondary)]">
+                    Transfer to recipient:
+                  </span>
+                  <span className="text-sm font-mono text-[var(--foreground)]">
+                    {amount} PYUSD
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-[var(--text-secondary)]">
+                    Service fee (0.5%):
+                  </span>
+                  <span className="text-sm font-mono text-[var(--foreground)]">
+                    {amount
+                      ? (parseFloat(amount) * 0.005).toFixed(6)
+                      : "0.000000"}{" "}
+                    PYUSD
+                  </span>
+                </div>
+                <div className="border-t border-[var(--card-border)] pt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-[var(--foreground)]">
+                      Total amount needed:
+                    </span>
+                    <span className="text-sm font-mono font-medium text-[var(--accent)]">
+                      {amount
+                        ? (parseFloat(amount) * 1.005).toFixed(6)
+                        : "0.000000"}{" "}
+                      PYUSD
+                    </span>
+                  </div>
+                </div>
+                <div className="text-xs text-[var(--text-secondary)] mt-2">
+                  💡 This will send{" "}
+                  {amount && parseFloat(amount) * 0.005 > 0.01
+                    ? "2 separate transfers"
+                    : "1 transfer"}{" "}
+                  in a single gasless transaction
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Link Section */}
           {(recipient || amount) && (
             <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
@@ -1308,7 +1358,7 @@ export default function Home() {
                 >
                   {isLoading
                     ? "Testing..."
-                    : "Test PYUSD Transfer (1 PYUSD) - Gasless"}
+                    : "Test PYUSD Transfer (1 PYUSD + 0.005 PYUSD fee) - Gasless"}
                 </button>
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
@@ -1318,7 +1368,8 @@ export default function Home() {
                 </p>
                 <p>
                   🟢 <strong>Gasless:</strong> Uses EIP-7702 + Pimlico
-                  sponsorship (no gas fees)
+                  sponsorship (no gas fees) - Sends 2 transfers: 1 PYUSD to
+                  recipient + 0.005 PYUSD fee
                 </p>
                 <p>
                   ✅ Test with gas first to verify basic Privy functionality

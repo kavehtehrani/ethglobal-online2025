@@ -42,6 +42,34 @@ const PYUSD_ABI = [
   },
 ] as const;
 
+// Transaction Counter ABI
+const TRANSACTION_COUNTER_ABI = [
+  {
+    name: "getCount",
+    type: "function",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "count", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    name: "getFreeTierConfig",
+    type: "function",
+    inputs: [],
+    outputs: [
+      { name: "limit", type: "uint256" },
+      { name: "ratio", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    name: "incrementCount",
+    type: "function",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
+
 export interface GaslessPaymentParams {
   recipientAddress: `0x${string}`;
   amount: string;
@@ -113,6 +141,44 @@ export async function executePrivyGaslessPayment({
       : calculatedFee;
 
   console.log("💰 Fee calculated:", formatUnits(feeAmount, 6), "PYUSD");
+
+  // Step 2.6: Check if transaction should be free (off-chain calculation)
+  console.log("🔍 Checking transaction tier status...");
+
+  const [userCount, tierConfig] = await Promise.all([
+    publicClient.readContract({
+      address: CONTRACTS.TRANSACTION_COUNTER,
+      abi: TRANSACTION_COUNTER_ABI,
+      functionName: "getCount",
+      args: [privyWallet.address],
+    }),
+    publicClient.readContract({
+      address: CONTRACTS.TRANSACTION_COUNTER,
+      abi: TRANSACTION_COUNTER_ABI,
+      functionName: "getFreeTierConfig",
+      args: [],
+    }),
+  ]);
+
+  const totalTransactions = Number(userCount);
+  const freeTierLimit = Number(tierConfig[0]);
+  const freeTierRatio = Number(tierConfig[1]);
+
+  // Calculate if transaction is free (off-chain logic)
+  let isFree = false;
+  if (totalTransactions < freeTierLimit) {
+    isFree = true;
+  } else {
+    const transactionsAfterLimit = totalTransactions - freeTierLimit;
+    isFree = transactionsAfterLimit % freeTierRatio === 0;
+  }
+
+  console.log("🎯 Transaction is free:", isFree);
+  console.log("📊 User stats:", {
+    totalTransactions,
+    freeTierLimit,
+    freeTierRatio,
+  });
 
   // Step 3: Create wallet client from Privy wallet
   console.log("🔧 Creating wallet client from Privy wallet...");
@@ -188,9 +254,7 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ EIP-7702 authorization signed");
 
-  // Step 8: Build batch transfer calls
-  // For now, we'll always send both transfers (fee + recipient)
-  // In the future, we can add logic to check if transaction is free
+  // Step 8: Build transfer calls based on free tier status
   const recipientTransferData = encodeFunctionData({
     abi: [
       {
@@ -208,27 +272,62 @@ export async function executePrivyGaslessPayment({
     args: [recipientAddress, amountInWei],
   });
 
-  const feeTransferData = encodeFunctionData({
-    abi: [
-      {
-        inputs: [
-          { internalType: "address", name: "to", type: "address" },
-          { internalType: "uint256", name: "amount", type: "uint256" },
-        ],
-        name: "transfer",
-        outputs: [{ internalType: "bool", name: "", type: "bool" }],
-        stateMutability: "nonpayable",
-        type: "function",
-      },
-    ],
-    functionName: "transfer",
-    args: [FEE_RECEIVER_ADDRESS, feeAmount],
+  // Prepare calls array
+  const calls = [
+    {
+      to: CONTRACTS.PYUSD,
+      data: recipientTransferData,
+      value: BigInt(0),
+    },
+  ];
+
+  // Add fee transfer only if not free
+  if (!isFree) {
+    const feeTransferData = encodeFunctionData({
+      abi: [
+        {
+          inputs: [
+            { internalType: "address", name: "to", type: "address" },
+            { internalType: "uint256", name: "amount", type: "uint256" },
+          ],
+          name: "transfer",
+          outputs: [{ internalType: "bool", name: "", type: "bool" }],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ],
+      functionName: "transfer",
+      args: [FEE_RECEIVER_ADDRESS, feeAmount],
+    });
+
+    calls.unshift({
+      to: CONTRACTS.PYUSD,
+      data: feeTransferData,
+      value: BigInt(0),
+    });
+
+    console.log("📝 Batch transfer data encoded (with fee)");
+  } else {
+    console.log("📝 Transfer data encoded (free transaction)");
+  }
+
+  // Always add incrementCount call to the batch
+  const incrementCountData = encodeFunctionData({
+    abi: TRANSACTION_COUNTER_ABI,
+    functionName: "incrementCount",
+    args: [privyWallet.address],
   });
 
-  console.log("📝 Batch transfer data encoded");
+  calls.push({
+    to: CONTRACTS.TRANSACTION_COUNTER,
+    data: incrementCountData,
+    value: BigInt(0),
+  });
 
-  // Step 9: Send sponsored transaction with batch calls
-  console.log("🚀 Sending sponsored batch transaction...");
+  console.log("📊 Added incrementCount to batch transaction");
+
+  // Step 9: Send sponsored transaction
+  console.log("🚀 Sending sponsored transaction...");
 
   const sponsorshipPolicyId = process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID;
   if (!sponsorshipPolicyId) {
@@ -236,18 +335,7 @@ export async function executePrivyGaslessPayment({
   }
 
   const hash = await smartAccountClient.sendTransaction({
-    calls: [
-      {
-        to: CONTRACTS.PYUSD,
-        data: feeTransferData,
-        value: BigInt(0),
-      },
-      {
-        to: CONTRACTS.PYUSD,
-        data: recipientTransferData,
-        value: BigInt(0),
-      },
-    ],
+    calls,
     factory: "0x7702",
     factoryData: "0x",
     paymasterContext: {
@@ -258,6 +346,9 @@ export async function executePrivyGaslessPayment({
 
   console.log("✅ Gasless transaction submitted!");
   console.log("Transaction hash:", hash);
+  console.log(
+    "📊 Transaction counter incremented as part of batch transaction"
+  );
 
   return {
     success: true,

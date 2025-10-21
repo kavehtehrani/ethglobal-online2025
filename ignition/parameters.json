@@ -8,5 +8,6 @@
     "maxFee": "5000000000",
     "freeTierLimit": 5,
     "freeTierRatio": 5
-  }
+  },
+  "TransactionCounterModule": {}
 }

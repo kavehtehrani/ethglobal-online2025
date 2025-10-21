@@ -1,43 +1,101 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  getUserTierStatus,
-  getContractConfig,
-  formatTierStatus,
-  TierStatus,
-  ContractConfig,
-} from "@/lib/gaslessPaymentContract";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { createPublicClient, http } from "viem";
+import { sepolia } from "viem/chains";
+import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
 
 interface TierStatusProps {
   userAddress: `0x${string}`;
 }
 
+interface TierStatus {
+  freeTransactionsRemaining: number;
+  nextFreeTransaction: number;
+  isFree: boolean;
+}
+
+const TRANSACTION_COUNTER_ABI = [
+  {
+    name: "getCount",
+    type: "function",
+    inputs: [{ name: "user", type: "address" }],
+    outputs: [{ name: "count", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    name: "getFreeTierConfig",
+    type: "function",
+    inputs: [],
+    outputs: [
+      { name: "limit", type: "uint256" },
+      { name: "ratio", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+] as const;
+
 export function TierStatusComponent({ userAddress }: TierStatusProps) {
   const [tierStatus, setTierStatus] = useState<TierStatus | null>(null);
-  const [contractConfig, setContractConfig] = useState<ContractConfig | null>(
-    null
-  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchTierData = useCallback(async () => {
+  const publicClient = createPublicClient({
+    chain: sepolia,
+    transport: http(RPC_ENDPOINTS.SEPOLIA),
+  });
+
+  const fetchTierStatus = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const [tierData, configData] = await Promise.all([
-        getUserTierStatus(userAddress),
-        getContractConfig(),
+      const [userCount, tierConfig] = await Promise.all([
+        publicClient.readContract({
+          address: CONTRACTS.TRANSACTION_COUNTER,
+          abi: TRANSACTION_COUNTER_ABI,
+          functionName: "getCount",
+          args: [userAddress],
+        }),
+        publicClient.readContract({
+          address: CONTRACTS.TRANSACTION_COUNTER,
+          abi: TRANSACTION_COUNTER_ABI,
+          functionName: "getFreeTierConfig",
+          args: [],
+        }),
       ]);
 
-      setTierStatus(tierData);
-      setContractConfig(configData);
+      const totalTransactions = Number(userCount);
+      const freeTierLimit = Number(tierConfig[0]);
+      const freeTierRatio = Number(tierConfig[1]);
+
+      // Calculate tier status off-chain
+      let isFree = false;
+      let freeTransactionsRemaining = 0;
+      let nextFreeTransaction = 1;
+
+      if (totalTransactions < freeTierLimit) {
+        isFree = true;
+        freeTransactionsRemaining = freeTierLimit - totalTransactions;
+        nextFreeTransaction = 1;
+      } else {
+        isFree = false;
+        freeTransactionsRemaining = 0;
+        const transactionsAfterLimit = totalTransactions - freeTierLimit;
+        const remainder = transactionsAfterLimit % freeTierRatio;
+        nextFreeTransaction = remainder === 0 ? 1 : freeTierRatio - remainder;
+      }
+
+      setTierStatus({
+        freeTransactionsRemaining,
+        nextFreeTransaction,
+        isFree,
+      });
     } catch (err) {
-      console.error("Error fetching tier data:", err);
+      console.error("Error fetching tier status:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to fetch tier data"
+        err instanceof Error ? err.message : "Failed to fetch tier status"
       );
     } finally {
       setLoading(false);
@@ -46,9 +104,9 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
 
   useEffect(() => {
     if (userAddress) {
-      fetchTierData();
+      fetchTierStatus();
     }
-  }, [userAddress, fetchTierData]);
+  }, [userAddress, fetchTierStatus]);
 
   if (loading) {
     return (
@@ -75,7 +133,7 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
             🎯 Your Tier Status
           </h2>
           <button
-            onClick={fetchTierData}
+            onClick={fetchTierStatus}
             className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
           >
             <ArrowPathIcon className="h-4 w-4" />
@@ -86,11 +144,9 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
     );
   }
 
-  if (!tierStatus || !contractConfig) {
+  if (!tierStatus) {
     return null;
   }
-
-  const formattedStatus = formatTierStatus(tierStatus, contractConfig);
 
   return (
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
@@ -99,7 +155,7 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
           🎯 Your Tier Status
         </h2>
         <button
-          onClick={fetchTierData}
+          onClick={fetchTierStatus}
           className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
         >
           <ArrowPathIcon className="h-4 w-4" />
@@ -107,52 +163,66 @@ export function TierStatusComponent({ userAddress }: TierStatusProps) {
       </div>
 
       <div
-        className={`p-3 rounded-lg border ${formattedStatus.bgColor} ${formattedStatus.borderColor}`}
+        className={`p-3 rounded-lg border ${
+          tierStatus.isFree
+            ? "border-[var(--success)] bg-green-50 dark:bg-green-900/20"
+            : "border-[var(--warning)] bg-yellow-50 dark:bg-yellow-900/20"
+        }`}
       >
         <div className="flex items-center justify-between mb-2">
-          <h3 className={`font-semibold ${formattedStatus.color}`}>
-            {formattedStatus.tier}
+          <h3
+            className={`font-semibold ${
+              tierStatus.isFree
+                ? "text-green-700 dark:text-green-400"
+                : "text-yellow-700 dark:text-yellow-400"
+            }`}
+          >
+            {tierStatus.isFree ? "🆓 Free Transaction" : "💰 Paid Transaction"}
           </h3>
-          <span className="text-sm text-[var(--text-muted)]">
-            Transaction #{Number(tierStatus.transactionCount) + 1}
-          </span>
         </div>
-        <p className={`text-sm ${formattedStatus.color}`}>
-          {formattedStatus.description}
+        <p
+          className={`text-sm ${
+            tierStatus.isFree
+              ? "text-green-700 dark:text-green-400"
+              : "text-yellow-700 dark:text-yellow-400"
+          }`}
+        >
+          {tierStatus.freeTransactionsRemaining > 0
+            ? `${tierStatus.freeTransactionsRemaining} free transactions remaining`
+            : `Next free transaction in ${tierStatus.nextFreeTransaction} transactions`}
         </p>
       </div>
 
-      {/* Contract Configuration Display */}
+      {/* Service Configuration Display */}
       <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
         <h4 className="text-sm font-medium text-[var(--foreground)] mb-2">
-          Contract Configuration
+          Service Configuration
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs text-[var(--text-muted)]">
-          <div className="flex justify-between">
-            <span>Free Tier Limit:</span>
-            <span className="font-mono">
-              {Number(contractConfig.freeTierLimit)} transactions
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>Free Tier Ratio:</span>
-            <span className="font-mono">
-              1 in {Number(contractConfig.freeTierRatio)}
-            </span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-xs text-[var(--text-secondary)]">
           <div className="flex justify-between">
             <span>Service Fee:</span>
-            <span className="font-mono">
-              {Number(contractConfig.serviceFeeBasisPoints) / 100}%
-            </span>
+            <span className="font-mono">0.5%</span>
           </div>
           <div className="flex justify-between">
-            <span>Min/Max Fee:</span>
+            <span>Min Fee:</span>
+            <span className="font-mono">0.01 PYUSD</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Max Fee:</span>
+            <span className="font-mono">10 PYUSD</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Transaction Type:</span>
             <span className="font-mono">
-              ${Number(contractConfig.minServiceFee) / 1e6} - $
-              {Number(contractConfig.maxServiceFee) / 1e6}
+              {tierStatus.isFree ? "Single Transfer" : "Batch Transfer"}
             </span>
           </div>
+        </div>
+        <div className="mt-3 text-xs text-[var(--text-secondary)]">
+          💡{" "}
+          {tierStatus.isFree
+            ? "Free transactions send only the amount to recipient"
+            : "Paid transactions send amount to recipient + fee to service"}
         </div>
       </div>
     </div>

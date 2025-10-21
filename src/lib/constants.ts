@@ -23,11 +23,15 @@ export const CONTRACTS = {
   // SimpleAccount implementations
   SIMPLE_ACCOUNT: "0xe6Cae83BdE06E4c305530e199D7217f42808555B" as `0x${string}`, // Standard SimpleAccount
   SIMPLE_ACCOUNT_WITH_FEES:
-    "0x38F76e8fCC9b8528eEa61b11818e89eA0d8eb871" as `0x${string}`, // Will be updated after deployment
+    "0x38F76e8fCC9b8528eEa61b11818e89eA0d8eb871" as `0x${string}`, // TODO: REMOVE
 
   // EntryPoint v0.7 address (used by Pimlico)
   ENTRY_POINT_V07:
     "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as `0x${string}`,
+
+  // Transaction counter for free tier tracking
+  TRANSACTION_COUNTER:
+    "0xE6A149825907757801936FCdA35Ab96A13c8cB04" as `0x${string}`,
 } as const;
 
 // Pimlico configuration
