@@ -27,6 +27,7 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
    ```env
    # Privy Configuration
    NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id_here
+   PRIVY_SECRET=your_privy_secret
 
    # Pimlico Configuration
    NEXT_PUBLIC_PIMLICO_API_KEY=your_pimlico_api_key_here
