@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import {
   useCreateWallet,
   usePrivy,
@@ -1723,7 +1723,22 @@ function HomeContent() {
   );
 }
 
-// Main component - removed Suspense wrapper to test
+// Main component with Suspense boundary for useSearchParams
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[var(--background)] py-6">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)] mx-auto"></div>
+              <p className="mt-4 text-[var(--text-secondary)]">Loading...</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
+  );
 }
