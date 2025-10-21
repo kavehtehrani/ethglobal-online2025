@@ -905,92 +905,60 @@ export default function Home() {
               </button>
             </div>
           )}
+
+          {/* Balances - Compact display in authentication section */}
+          {authenticated && privyWallet && (
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-[var(--foreground)]">
+                  Balances
+                </h3>
+                <button
+                  onClick={() =>
+                    fetchBalances(privyWallet.address as `0x${string}`)
+                  }
+                  disabled={balancesLoading}
+                  className="bg-[var(--accent)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {balancesLoading ? "Refreshing..." : "🔄 Refresh"}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {/* ETH Balance */}
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded">
+                  <div className="text-xs text-[var(--text-muted)] mb-1">
+                    ETH
+                  </div>
+                  {balancesLoading ? (
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-semibold text-[var(--foreground)]">
+                      {parseFloat(ethBalance).toFixed(4)}
+                    </div>
+                  )}
+                </div>
+
+                {/* PYUSD Balance */}
+                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded">
+                  <div className="text-xs text-[var(--text-muted)] mb-1">
+                    PYUSD
+                  </div>
+                  {balancesLoading ? (
+                    <div className="animate-pulse">
+                      <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-semibold text-[var(--foreground)]">
+                      {parseFloat(pyusdBalance).toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* Balance Display */}
-        {authenticated && privyWallet && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
-            <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
-              <h2 className="text-xl font-bold text-[var(--foreground)]">
-                💰 Your Balances
-              </h2>
-            </div>
-            <div className="p-4">
-              <button
-                onClick={() =>
-                  fetchBalances(privyWallet.address as `0x${string}`)
-                }
-                disabled={balancesLoading}
-                className="bg-[var(--accent)] text-white px-3 py-1 rounded text-sm hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {balancesLoading ? "Refreshing..." : "🔄 Refresh"}
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* ETH Balance */}
-              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-3 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                      ETH Balance
-                    </h3>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Sepolia Testnet
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {balancesLoading ? (
-                      <div className="animate-pulse">
-                        <div className="h-6 bg-[var(--card-border)] rounded w-20 mb-1"></div>
-                        <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-[var(--foreground)]">
-                          {parseFloat(ethBalance).toFixed(4)} ETH
-                        </p>
-                        <p className="text-sm text-[var(--text-muted)]">
-                          {parseFloat(ethBalance).toFixed(6)} ETH
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* PYUSD Balance */}
-              <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-3 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--foreground)]">
-                      PYUSD Balance
-                    </h3>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      PayPal USD
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {balancesLoading ? (
-                      <div className="animate-pulse">
-                        <div className="h-6 bg-[var(--card-border)] rounded w-20 mb-1"></div>
-                        <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold text-[var(--foreground)]">
-                          {parseFloat(pyusdBalance).toFixed(2)} PYUSD
-                        </p>
-                        <p className="text-sm text-[var(--text-muted)]">
-                          {parseFloat(pyusdBalance).toFixed(6)} PYUSD
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Transaction Status & History */}
         {(transactionStatus.isProcessing ||
@@ -1097,16 +1065,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Tier Status */}
-        {authenticated && privyWallet && (
-          <div className="mb-6">
-            <TierStatusComponent
-              userAddress={privyWallet.address as `0x${string}`}
-              onTransactionComplete={triggerTierStatusRefresh}
-            />
-          </div>
-        )}
-
         {/* Gasless Payment - Main Feature */}
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
           <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
@@ -1114,6 +1072,7 @@ export default function Home() {
               Send PYUSD (Gasless)
             </h2>
           </div>
+
           <div className="p-4">
             <div className="space-y-3">
               {/* Desktop: Single row layout */}
@@ -1286,7 +1245,7 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                  <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-100 dark:bg-green-900/20 rounded border border-green-300 dark:border-green-800">
                     ✅ <strong>Gasless Transaction:</strong> This transaction
                     will be sponsored (no gas fees required)
                   </div>
@@ -1294,12 +1253,22 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Tier Status - At bottom of Send PYUSD section */}
+          {authenticated && privyWallet && (
+            <div className="p-4 border-t border-[var(--card-border)]">
+              <TierStatusComponent
+                userAddress={privyWallet.address as `0x${string}`}
+                onTransactionComplete={triggerTierStatusRefresh}
+              />
+            </div>
+          )}
         </div>
 
         {/* Request Payment Link Section */}
         <CollapsibleSection title="Request Payment Link" icon="🔗">
           <div className="space-y-3">
-            <p className="text-sm text-[var(--text-secondary)]">
+            <p className="text-sm mt-2 text-[var(--text-secondary)]">
               Generate a payment link that pre-fills the recipient and amount
               for easy sharing.
             </p>

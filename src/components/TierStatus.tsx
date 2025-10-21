@@ -152,7 +152,7 @@ export function TierStatusComponent({
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-[var(--foreground)]">
-            🎯 Your Tier Status
+            🎯 Your Reward Status
           </h2>
           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--accent)]"></div>
         </div>
@@ -169,7 +169,7 @@ export function TierStatusComponent({
       <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-[var(--foreground)]">
-            🎯 Your Tier Status
+            🎯 Your Reward Status
           </h2>
           <button
             onClick={fetchTierStatus}
@@ -191,7 +191,7 @@ export function TierStatusComponent({
     <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl font-bold text-[var(--foreground)]">
-          🎯 Your Tier Status
+          🎯 Your Reward Status
         </h2>
         <button
           onClick={fetchTierStatus}
@@ -203,17 +203,15 @@ export function TierStatusComponent({
 
       <div
         className={`p-3 rounded-lg border ${
-          tierStatus.isFree
-            ? "border-[var(--success)] bg-green-50 dark:bg-green-900/20"
-            : "border-[var(--warning)] bg-yellow-50 dark:bg-yellow-900/20"
+          tierStatus.isFree ? "border-green-500" : "border-yellow-500"
         }`}
       >
         <div className="flex items-center justify-between mb-2">
           <h3
             className={`font-semibold ${
               tierStatus.isFree
-                ? "text-green-700 dark:text-green-400"
-                : "text-yellow-700 dark:text-yellow-400"
+                ? "text-gray-900 dark:text-green-500"
+                : "text-yellow-900 dark:text-yellow-600"
             }`}
           >
             {tierStatus.isFree ? "🆓 Free Transaction" : "💰 Paid Transaction"}
@@ -222,8 +220,8 @@ export function TierStatusComponent({
         <p
           className={`text-sm ${
             tierStatus.isFree
-              ? "text-green-900 dark:text-green-400"
-              : "text-yellow-700 dark:text-yellow-400"
+              ? "text-gray-800 dark:text-green-500"
+              : "text-gray-900 dark:text-yellow-600"
           }`}
         >
           {tierStatus.isFree
