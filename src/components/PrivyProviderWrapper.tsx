@@ -37,8 +37,6 @@ export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
       config={{
         embeddedWallets: {
           showWalletUIs: false,
-          createOnLogin: "all-users",
-          noPromptOnSignature: false,
         },
         defaultChain: sepolia,
         supportedChains: [sepolia],

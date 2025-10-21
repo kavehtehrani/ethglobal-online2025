@@ -1,0 +1,7 @@
+deploy/
+contracts/
+test/
+ignition/
+artifacts/
+cache/
+scripts/

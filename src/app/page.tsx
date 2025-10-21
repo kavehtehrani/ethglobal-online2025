@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   useCreateWallet,
   usePrivy,
@@ -50,7 +50,14 @@ const TRANSACTION_COUNTER_ABI = [
   },
 ] as const;
 
-export default function Home() {
+// Component that uses useSearchParams - needs Suspense boundary
+function HomeContent() {
+  const renderCountRef = useRef<number>(0);
+  const useEffectCountRef = useRef<number>(0);
+
+  renderCountRef.current += 1;
+  console.log(`🔄 HomeContent rendering #${renderCountRef.current}`);
+
   const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
@@ -66,56 +73,119 @@ export default function Home() {
   const [isFreeTransaction, setIsFreeTransaction] = useState<boolean | null>(
     null
   );
+  const [tierStatus, setTierStatus] = useState<{
+    freeTransactionsRemaining: number;
+    nextFreeTransaction: number;
+    isFree: boolean;
+  } | null>(null);
   const [transactionCompleted, setTransactionCompleted] = useState<number>(0);
+  const lastTierCheckTimeRef = useRef<number>(0);
+  const isCheckingTierRef = useRef<boolean>(false);
 
   // Function to trigger tier status refresh after transaction completion
-  const triggerTierStatusRefresh = () => {
+  const triggerTierStatusRefresh = useCallback(() => {
     console.log("🔄 Triggering tier status refresh");
     setTransactionCompleted((prev) => prev + 1);
-  };
+  }, []); // Empty dependency array - this function never changes
 
-  // Function to check free tier status
-  const checkFreeTierStatus = async (userAddress: `0x${string}`) => {
-    try {
-      const publicClient = createPublicClient({
-        chain: sepolia,
-        transport: http(RPC_ENDPOINTS.SEPOLIA),
-      });
+  // Function to check free tier status with rate limiting
+  const checkFreeTierStatus = useCallback(
+    async (userAddress: `0x${string}`) => {
+      const now = Date.now();
+      const timeSinceLastCheck = now - lastTierCheckTimeRef.current;
 
-      const [userCount, tierConfig] = await Promise.all([
-        publicClient.readContract({
-          address: CONTRACTS.TRANSACTION_COUNTER,
-          abi: TRANSACTION_COUNTER_ABI,
-          functionName: "getCount",
-          args: [userAddress],
-        }),
-        publicClient.readContract({
-          address: CONTRACTS.TRANSACTION_COUNTER,
-          abi: TRANSACTION_COUNTER_ABI,
-          functionName: "getFreeTierConfig",
-          args: [],
-        }),
-      ]);
+      console.log(
+        "🔍 checkFreeTierStatus called for:",
+        userAddress,
+        "Time since last check:",
+        timeSinceLastCheck
+      );
 
-      const totalTransactions = Number(userCount);
-      const freeTierLimit = Number(tierConfig[0]);
-      const freeTierRatio = Number(tierConfig[1]);
-
-      let isFree = false;
-      if (totalTransactions < freeTierLimit) {
-        isFree = true;
-      } else {
-        const transactionsAfterLimit = totalTransactions - freeTierLimit;
-        const remainder = transactionsAfterLimit % freeTierRatio;
-        isFree = remainder === 0;
+      // Rate limit: only allow one request per 5 seconds
+      if (timeSinceLastCheck < 5000) {
+        console.log(
+          "⏳ Rate limiting tier status check (too soon, need 5 seconds)"
+        );
+        return;
       }
 
-      setIsFreeTransaction(isFree);
-    } catch (error) {
-      console.error("Error checking free tier status:", error);
-      setIsFreeTransaction(null);
-    }
-  };
+      // Prevent concurrent checks
+      if (isCheckingTierRef.current) {
+        console.log("⏳ Tier status check already in progress");
+        return;
+      }
+
+      try {
+        console.log("🔍 Checking real tier status for:", userAddress);
+        isCheckingTierRef.current = true;
+        lastTierCheckTimeRef.current = now;
+
+        const publicClient = createPublicClient({
+          chain: sepolia,
+          transport: http(RPC_ENDPOINTS.SEPOLIA),
+        });
+
+        const [userCount, tierConfig] = await Promise.all([
+          publicClient.readContract({
+            address: CONTRACTS.TRANSACTION_COUNTER,
+            abi: TRANSACTION_COUNTER_ABI,
+            functionName: "getCount",
+            args: [userAddress],
+          }),
+          publicClient.readContract({
+            address: CONTRACTS.TRANSACTION_COUNTER,
+            abi: TRANSACTION_COUNTER_ABI,
+            functionName: "getFreeTierConfig",
+            args: [],
+          }),
+        ]);
+
+        const totalTransactions = Number(userCount);
+        const freeTierLimit = Number(tierConfig[0]);
+        const freeTierRatio = Number(tierConfig[1]);
+
+        // Calculate detailed tier status
+        let isFree = false;
+        let freeTransactionsRemaining = 0;
+        let nextFreeTransaction = 1;
+
+        if (totalTransactions < freeTierLimit) {
+          isFree = true;
+          freeTransactionsRemaining = freeTierLimit - totalTransactions;
+          nextFreeTransaction = 1;
+        } else {
+          const transactionsAfterLimit = totalTransactions - freeTierLimit;
+          const remainder = transactionsAfterLimit % freeTierRatio;
+          isFree = remainder === 0;
+          freeTransactionsRemaining = 0;
+          nextFreeTransaction = remainder === 0 ? 1 : freeTierRatio - remainder;
+        }
+
+        console.log("✅ Real tier status updated:", isFree ? "FREE" : "PAID");
+        console.log("🔍 Tier status details:", {
+          totalTransactions,
+          freeTierLimit,
+          freeTierRatio,
+          isFree,
+          freeTransactionsRemaining,
+          nextFreeTransaction,
+        });
+        setIsFreeTransaction(isFree);
+        setTierStatus({
+          freeTransactionsRemaining,
+          nextFreeTransaction,
+          isFree,
+        });
+      } catch (error) {
+        console.error("Error checking free tier status:", error);
+        setIsFreeTransaction(null);
+        setTierStatus(null);
+      } finally {
+        isCheckingTierRef.current = false;
+      }
+    },
+    []
+  ); // Empty dependency array - using ref for timing
 
   // Parse URL parameters for payment links
   useEffect(() => {
@@ -131,26 +201,46 @@ export default function Home() {
     }
   }, [searchParams]);
 
-  // Check free tier status when user is authenticated
+  // Check free tier status when wallet address changes
   useEffect(() => {
-    if (authenticated && wallets.length > 0) {
-      const userAddress = wallets[0].address as `0x${string}`;
-      checkFreeTierStatus(userAddress);
-    } else {
+    useEffectCountRef.current += 1;
+    const currentWalletAddress = wallets.length > 0 ? wallets[0].address : null;
+
+    console.log(
+      `🔍 useEffect #1 triggered #${useEffectCountRef.current} - wallet address:`,
+      currentWalletAddress
+    );
+
+    // Check tier status when authenticated and wallet is available
+    if (authenticated && currentWalletAddress) {
+      console.log("🔄 Checking tier status for:", currentWalletAddress);
+      checkFreeTierStatus(currentWalletAddress as `0x${string}`);
+    } else if (!authenticated || !currentWalletAddress) {
+      console.log("🔄 No wallet or not authenticated, setting to null");
       setIsFreeTransaction(null);
     }
-  }, [authenticated, wallets]);
+  }, [authenticated, checkFreeTierStatus, wallets]);
 
   // Refresh free tier status after transaction completion
   useEffect(() => {
-    if (authenticated && wallets.length > 0 && transactionCompleted > 0) {
-      const userAddress = wallets[0].address as `0x${string}`;
-      console.log(
-        "🔄 Refreshing free tier status after transaction completion"
-      );
-      checkFreeTierStatus(userAddress);
+    useEffectCountRef.current += 1;
+    console.log(
+      `🔍 useEffect #2 triggered #${useEffectCountRef.current} - transactionCompleted:`,
+      transactionCompleted
+    );
+
+    if (transactionCompleted > 0) {
+      const currentWalletAddress =
+        wallets.length > 0 ? wallets[0].address : null;
+
+      if (authenticated && currentWalletAddress) {
+        console.log(
+          "🔄 Refreshing free tier status after transaction completion"
+        );
+        checkFreeTierStatus(currentWalletAddress as `0x${string}`);
+      }
     }
-  }, [transactionCompleted, authenticated, wallets]);
+  }, [transactionCompleted, authenticated, checkFreeTierStatus, wallets]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [ethBalance, setEthBalance] = useState<string>("0");
@@ -191,10 +281,11 @@ export default function Home() {
 
   // Note: We don't need to set active wallet since we're using Privy's native wallet directly
 
-  // Function to fetch balances
-  const fetchBalances = async (address: `0x${string}`) => {
+  // Function to fetch balances (RE-ENABLED)
+  const fetchBalances = useCallback(async (address: `0x${string}`) => {
     if (!address) return;
 
+    console.log("🔍 Fetching real balances for:", address);
     setBalancesLoading(true);
     try {
       const publicClient = createPublicClient({
@@ -227,6 +318,13 @@ export default function Home() {
 
       const pyusdBalanceFormatted = formatUnits(pyusdBalanceWei, 6); // PYUSD has 6 decimals
       setPyusdBalance(pyusdBalanceFormatted);
+
+      console.log(
+        "✅ Real balances - ETH:",
+        ethBalanceFormatted,
+        "PYUSD:",
+        pyusdBalanceFormatted
+      );
     } catch (error) {
       console.error("Error fetching balances:", error);
       setEthBalance("0");
@@ -234,14 +332,20 @@ export default function Home() {
     } finally {
       setBalancesLoading(false);
     }
-  };
+  }, []); // Empty dependency array - function doesn't depend on any props/state
 
   // Fetch balances when wallet address changes
   useEffect(() => {
+    useEffectCountRef.current += 1;
+    console.log(
+      `🔍 useEffect #3 triggered #${useEffectCountRef.current} - privyWallet address:`,
+      privyWallet?.address
+    );
+
     if (privyWallet?.address) {
       fetchBalances(privyWallet.address as `0x${string}`);
     }
-  }, [privyWallet?.address]);
+  }, [privyWallet?.address, fetchBalances]);
 
   // Debug logging
   console.log("🔍 Privy Debug:", {
@@ -1155,10 +1259,6 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-xs text-[var(--text-secondary)] mt-2 p-3 bg-green-100 dark:bg-green-900/20 rounded border border-green-300 dark:border-green-800">
-                    ✅ <strong>Gasless Transaction:</strong> This transaction
-                    will be sponsored (no gas fees required)
-                  </div>
                 </div>
               </div>
             )}
@@ -1169,6 +1269,9 @@ export default function Home() {
             <div className="p-4 border-t border-[var(--card-border)]">
               <TierStatusComponent
                 userAddress={privyWallet.address as `0x${string}`}
+                tierStatus={tierStatus}
+                loading={false}
+                error={null}
                 onTransactionComplete={triggerTierStatusRefresh}
               />
             </div>
@@ -1618,4 +1721,9 @@ export default function Home() {
       </div>
     </div>
   );
+}
+
+// Main component - removed Suspense wrapper to test
+export default function Home() {
+  return <HomeContent />;
 }
