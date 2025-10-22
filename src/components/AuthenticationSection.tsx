@@ -17,9 +17,6 @@ export function AuthenticationSection({
   const { createWallet } = useCreateWallet();
 
   // Get the embedded wallet or any Privy wallet
-  const embeddedWallet = wallets.find(
-    (wallet) => wallet.walletClientType === "privy"
-  );
   const privyWallet = wallets.find(
     (wallet) =>
       wallet.walletClientType === "privy" ||

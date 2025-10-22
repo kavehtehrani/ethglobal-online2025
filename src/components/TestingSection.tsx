@@ -6,13 +6,21 @@ import { CollapsibleSection } from "./CollapsibleSection";
 
 interface TestingSectionProps {
   isLoading: boolean;
-  privyWallet: any;
+  privyWallet:
+    | {
+        address: string;
+      }
+    | null
+    | undefined;
   onTestBasicETHTransfer: () => void;
   onTestBasicPYUSDTransfer: () => void;
   ready: boolean;
   authenticated: boolean;
-  signAuthorization: any;
-  wallets: any[];
+  signAuthorization: ((input: unknown) => Promise<unknown>) | null;
+  wallets: Array<{
+    address: string;
+    walletClientType: string;
+  }>;
 }
 
 export function TestingSection({

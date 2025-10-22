@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React from "react";
 import { isAddress } from "viem";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { TierStatusComponent } from "./TierStatus";

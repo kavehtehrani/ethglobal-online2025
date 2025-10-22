@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import {
-  useCreateWallet,
   usePrivy,
   useSign7702Authorization,
   useWallets,
@@ -56,10 +55,9 @@ function HomeContent() {
   renderCountRef.current += 1;
   console.log(`🔄 HomeContent rendering #${renderCountRef.current}`);
 
-  const { ready, authenticated, login, logout, sendTransaction } = usePrivy();
+  const { ready, authenticated, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
-  const { createWallet } = useCreateWallet();
   const searchParams = useSearchParams();
 
   const [recipient, setRecipient] = useState<`0x${string}` | "">(
@@ -178,7 +176,6 @@ function HomeContent() {
         } else {
           // Past the initial free tier, now in "1 in X" system
           const transactionsAfterLimit = totalTransactions - freeTierLimit;
-          const remainder = transactionsAfterLimit % freeTierRatio;
 
           // Check if the NEXT transaction (totalTransactions + 1) would be free
           // In "1 in X" system: next transaction is free when (transactionsAfterLimit + 1) % freeTierRatio === 0
@@ -287,7 +284,7 @@ function HomeContent() {
       setTierStatus(null);
       setTotalTransactions(null);
     }
-  }, [authenticated, checkFreeTierStatus, wallets]);
+  }, [authenticated, checkFreeTierStatus, wallets, totalTransactions]);
 
   // Refresh free tier status after transaction completion
   useEffect(() => {
@@ -417,22 +414,6 @@ function HomeContent() {
 
   // Use Privy wallet address if available
   // const walletAddress = privyWallet?.address;
-
-  const handleCreateEmbeddedWallet = async () => {
-    try {
-      console.log("🔧 Creating embedded wallet...");
-      await createWallet();
-      console.log("✅ Embedded wallet created!");
-      notification.success("Embedded wallet created successfully!");
-    } catch (error) {
-      console.error("❌ Failed to create embedded wallet:", error);
-      notification.error(
-        `Failed to create embedded wallet: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    }
-  };
 
   const handleTestBasicETHTransfer = async () => {
     if (!privyWallet || !sendTransaction) {
