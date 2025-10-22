@@ -22,6 +22,8 @@ interface TierStatusProps {
     freeTierLimit: number;
     freeTierRatio: number;
   } | null;
+  // Add total transactions count
+  totalTransactions?: number | null;
 }
 
 export function TierStatusComponent({
@@ -31,6 +33,7 @@ export function TierStatusComponent({
   error,
   onTransactionComplete,
   contractConfig,
+  totalTransactions,
 }: TierStatusProps) {
   const [isServiceConfigExpanded, setIsServiceConfigExpanded] = useState(false);
 
@@ -40,7 +43,29 @@ export function TierStatusComponent({
     tierStatus,
     loading,
     error,
+    totalTransactions,
+    contractConfig,
   });
+
+  // Additional debugging for tier status display
+  if (tierStatus) {
+    console.log("🎯 TierStatus Display Debug:");
+    console.log("  📊 totalTransactions:", totalTransactions);
+    console.log("  🆓 isFree:", tierStatus.isFree);
+    console.log(
+      "  🔢 freeTransactionsRemaining:",
+      tierStatus.freeTransactionsRemaining
+    );
+    console.log("  ⏭️ nextFreeTransaction:", tierStatus.nextFreeTransaction);
+    console.log(
+      "  🎯 Display text will be:",
+      tierStatus.isFree
+        ? tierStatus.freeTransactionsRemaining > 0
+          ? `${tierStatus.freeTransactionsRemaining} free transactions remaining`
+          : "This transaction is on us! 🎉"
+        : `Next free transaction in ${tierStatus.nextFreeTransaction} transactions`
+    );
+  }
 
   // Listen for transaction completion and refresh tier status
   useEffect(() => {
@@ -78,11 +103,13 @@ export function TierStatusComponent({
     );
   }
 
-  if (!tierStatus) {
+  if (!tierStatus || totalTransactions === null) {
     return (
       <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
         <div className="text-[var(--text-secondary)] text-sm">
-          No tier status available
+          {totalTransactions === null
+            ? "Loading tier status..."
+            : "No tier status available"}
         </div>
       </div>
     );
@@ -139,6 +166,14 @@ export function TierStatusComponent({
       {isServiceConfigExpanded && (
         <div className="mt-4 pt-4 border-t border-[var(--border)]">
           <div className="space-y-2 text-sm text-[var(--text-secondary)]">
+            <div className="flex justify-between">
+              <span>Total Transactions:</span>
+              <span className="font-semibold text-[var(--foreground)]">
+                {totalTransactions !== null && totalTransactions !== undefined
+                  ? totalTransactions
+                  : "Loading..."}
+              </span>
+            </div>
             <div className="flex justify-between">
               <span>Free Tier Limit:</span>
               <span>

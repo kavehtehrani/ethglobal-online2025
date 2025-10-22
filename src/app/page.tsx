@@ -17,15 +17,13 @@ import {
 } from "@/lib/basicPrivyTest";
 import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { CollapsibleSection } from "@/components/CollapsibleSection";
-import { TierStatusComponent } from "@/components/TierStatus";
-import { getTransactionLink, getAddressLink } from "@/lib/explorer";
-import {
-  ArrowTopRightOnSquareIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClipboardDocumentIcon,
-} from "@heroicons/react/24/outline";
+import { AuthenticationSection } from "@/components/AuthenticationSection";
+import { BalanceDisplay } from "@/components/BalanceDisplay";
+import { TransactionStatus } from "@/components/TransactionStatus";
+import { GaslessPaymentForm } from "@/components/GaslessPaymentForm";
+import { PaymentLinkGenerator } from "@/components/PaymentLinkGenerator";
+import { TestingSection } from "@/components/TestingSection";
+import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { isAddress } from "viem";
 import { useSearchParams } from "next/navigation";
 
@@ -82,6 +80,9 @@ function HomeContent() {
     freeTierLimit: number;
     freeTierRatio: number;
   } | null>(null);
+  const [totalTransactions, setTotalTransactions] = useState<number | null>(
+    null
+  );
   const [transactionCompleted, setTransactionCompleted] = useState<number>(0);
   const lastTierCheckTimeRef = useRef<number>(0);
   const isCheckingTierRef = useRef<boolean>(false);
@@ -115,10 +116,10 @@ function HomeContent() {
         timeSinceLastCheck
       );
 
-      // Rate limit: only allow one request per 5 seconds
-      if (timeSinceLastCheck < 5000) {
+      // Rate limit: only allow one request per 1 second
+      if (timeSinceLastCheck < 1000) {
         console.log(
-          "⏳ Rate limiting tier status check (too soon, need 5 seconds)"
+          "⏳ Rate limiting tier status check (too soon, need 1 second)"
         );
         return;
       }
@@ -170,15 +171,30 @@ function HomeContent() {
         let nextFreeTransaction = 1;
 
         if (totalTransactions < freeTierLimit) {
+          // Still in the initial free tier
           isFree = true;
           freeTransactionsRemaining = freeTierLimit - totalTransactions;
           nextFreeTransaction = 1;
         } else {
+          // Past the initial free tier, now in "1 in X" system
           const transactionsAfterLimit = totalTransactions - freeTierLimit;
           const remainder = transactionsAfterLimit % freeTierRatio;
-          isFree = remainder === 0;
+
+          // Check if the NEXT transaction (totalTransactions + 1) would be free
+          // In "1 in X" system: next transaction is free when (transactionsAfterLimit + 1) % freeTierRatio === 0
+          const nextTransactionAfterLimit = transactionsAfterLimit + 1;
+          isFree = nextTransactionAfterLimit % freeTierRatio === 0;
           freeTransactionsRemaining = 0;
-          nextFreeTransaction = remainder === 0 ? 1 : freeTierRatio - remainder;
+
+          // Calculate next free transaction
+          if (isFree) {
+            // Next transaction is free, so next free after that is in freeTierRatio transactions
+            nextFreeTransaction = freeTierRatio;
+          } else {
+            // Next transaction is paid, calculate when the next free will be
+            const remainderForNext = nextTransactionAfterLimit % freeTierRatio;
+            nextFreeTransaction = freeTierRatio - remainderForNext;
+          }
         }
 
         console.log("✅ Real tier status updated:", isFree ? "FREE" : "PAID");
@@ -190,12 +206,41 @@ function HomeContent() {
           freeTransactionsRemaining,
           nextFreeTransaction,
         });
+
+        // Enhanced debugging information
+        console.log("🐛 DEBUGGING TIER CALCULATION:");
+        console.log("  📊 totalTransactions:", totalTransactions);
+        console.log("  🎯 freeTierLimit:", freeTierLimit);
+        console.log("  🔄 freeTierRatio:", freeTierRatio);
+        console.log(
+          "  📈 transactionsAfterLimit:",
+          totalTransactions - freeTierLimit
+        );
+        console.log(
+          "  🔢 nextTransactionAfterLimit:",
+          totalTransactions - freeTierLimit + 1
+        );
+        console.log(
+          "  🧮 remainder check:",
+          `(${totalTransactions - freeTierLimit + 1} % ${freeTierRatio}) === 0`
+        );
+        console.log("  ✅ isFree result:", isFree);
+        console.log("  🎯 nextFreeTransaction:", nextFreeTransaction);
+        console.log(
+          "🔄 Setting tier status with totalTransactions:",
+          totalTransactions
+        );
         setIsFreeTransaction(isFree);
         setTierStatus({
           freeTransactionsRemaining,
           nextFreeTransaction,
           isFree,
         });
+        setTotalTransactions(totalTransactions);
+        console.log(
+          "✅ Tier status updated - totalTransactions set to:",
+          totalTransactions
+        );
       } catch (error) {
         console.error("Error checking free tier status:", error);
         setIsFreeTransaction(null);
@@ -234,10 +279,13 @@ function HomeContent() {
     // Check tier status when authenticated and wallet is available
     if (authenticated && currentWalletAddress) {
       console.log("🔄 Checking tier status for:", currentWalletAddress);
+      console.log("🔄 Current totalTransactions state:", totalTransactions);
       checkFreeTierStatus(currentWalletAddress as `0x${string}`);
     } else if (!authenticated || !currentWalletAddress) {
       console.log("🔄 No wallet or not authenticated, setting to null");
       setIsFreeTransaction(null);
+      setTierStatus(null);
+      setTotalTransactions(null);
     }
   }, [authenticated, checkFreeTierStatus, wallets]);
 
@@ -284,10 +332,6 @@ function HomeContent() {
     message: "",
     error: null,
   });
-  const [showPaymentLink, setShowPaymentLink] = useState(false);
-  const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
-  const [paymentLinkRecipient, setPaymentLinkRecipient] = useState<string>("");
-  const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>("");
 
   // Note: We don't need to set active wallet since we're using Privy's native wallet directly
 
@@ -669,40 +713,6 @@ function HomeContent() {
     }
   };
 
-  // Generate payment link
-  const generatePaymentLink = () => {
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-
-    if (paymentLinkRecipient && isAddress(paymentLinkRecipient)) {
-      params.set("to", paymentLinkRecipient);
-    }
-
-    if (paymentLinkAmount && !isNaN(parseFloat(paymentLinkAmount))) {
-      params.set("amount", paymentLinkAmount);
-    }
-
-    return `${baseUrl}?${params.toString()}`;
-  };
-
-  // Copy payment link to clipboard
-  const copyPaymentLink = async () => {
-    try {
-      const link = generatePaymentLink();
-      await navigator.clipboard.writeText(link);
-      setPaymentLinkCopied(true);
-      notification.success("Payment link copied to clipboard!");
-
-      // Reset the copied state after 2 seconds
-      setTimeout(() => {
-        setPaymentLinkCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy payment link:", error);
-      notification.error("Failed to copy payment link");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[var(--background)] py-6">
       <div className="max-w-5xl mx-auto px-4">
@@ -723,926 +733,78 @@ function HomeContent() {
           </div>
         </div>
 
-        {/* Privy Authentication */}
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 mb-4">
-          {/* Desktop: Single row layout */}
-          <div className="hidden lg:block">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h2 className="text-lg font-bold text-[var(--foreground)]">
-                  Authentication
-                </h2>
-                {authenticated && privyWallet && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-[var(--text-muted)]">
-                      Wallet:
-                    </span>
-                    <a
-                      href={getAddressLink(privyWallet.address)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
-                    >
-                      {privyWallet.address.slice(0, 6)}...
-                      {privyWallet.address.slice(-4)}
-                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-              </div>
-              {!ready ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--accent)]"></div>
-              ) : !authenticated ? (
-                <button
-                  className="bg-[var(--accent)] text-white px-4 py-1.5 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
-                  onClick={login}
-                >
-                  Login with Privy
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-[var(--success)] text-sm">
-                    ✅ Authenticated
-                  </span>
-                  <button
-                    className="bg-[var(--text-secondary)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--text-muted)] transition-colors"
-                    onClick={logout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Authentication Section */}
+        <AuthenticationSection
+          onWalletCreated={() => {
+            // Refresh balances when wallet is created
+            if (privyWallet?.address) {
+              fetchBalances(privyWallet.address as `0x${string}`);
+            }
+          }}
+        />
 
-          {/* Mobile/Tablet: Two row layout */}
-          <div className="lg:hidden">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-bold text-[var(--foreground)]">
-                Authentication
-              </h2>
-              {!ready ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--accent)]"></div>
-              ) : !authenticated ? (
-                <button
-                  className="bg-[var(--accent)] text-white px-4 py-1.5 rounded text-sm hover:bg-[var(--accent-hover)] transition-colors"
-                  onClick={login}
-                >
-                  Login with Privy
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-[var(--success)] text-sm">
-                    ✅ Authenticated
-                  </span>
-                  <button
-                    className="bg-[var(--text-secondary)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--text-muted)] transition-colors"
-                    onClick={logout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-            {authenticated && privyWallet && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-[var(--text-muted)]">
-                  Wallet Address:
-                </span>
-                <a
-                  href={getAddressLink(privyWallet.address)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
-                >
-                  {privyWallet.address.slice(0, 6)}...
-                  {privyWallet.address.slice(-4)}
-                  <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                </a>
-              </div>
-            )}
-          </div>
-
-          {authenticated && wallets.length === 0 && (
-            <div className="mt-2 flex items-center gap-2">
-              <span className="text-sm text-[var(--warning)]">
-                No embedded wallet found
-              </span>
-              <button
-                className="bg-[var(--text-secondary)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--text-muted)] transition-colors"
-                onClick={handleCreateEmbeddedWallet}
-              >
-                Create Wallet
-              </button>
-            </div>
-          )}
-
-          {/* Balances - Compact display in authentication section */}
-          {authenticated && privyWallet && (
-            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-[var(--foreground)]">
-                  Balances
-                </h3>
-                <button
-                  onClick={() =>
-                    fetchBalances(privyWallet.address as `0x${string}`)
-                  }
-                  disabled={balancesLoading}
-                  className="bg-[var(--accent)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {balancesLoading ? "Refreshing..." : "🔄 Refresh"}
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                {/* ETH Balance */}
-                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded">
-                  <div className="text-xs text-[var(--text-muted)] mb-1">
-                    ETH
-                  </div>
-                  {balancesLoading ? (
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
-                    </div>
-                  ) : (
-                    <div className="text-sm font-semibold text-[var(--foreground)]">
-                      {parseFloat(ethBalance).toFixed(4)}
-                    </div>
-                  )}
-                </div>
-
-                {/* PYUSD Balance */}
-                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded">
-                  <div className="text-xs text-[var(--text-muted)] mb-1">
-                    PYUSD
-                  </div>
-                  {balancesLoading ? (
-                    <div className="animate-pulse">
-                      <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
-                    </div>
-                  ) : (
-                    <div className="text-sm font-semibold text-[var(--foreground)]">
-                      {parseFloat(pyusdBalance).toFixed(2)}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Transaction Status & History */}
-        {(transactionStatus.isProcessing ||
-          transactionStatus.error ||
-          transactionStatus.message ||
-          lastTransaction) && (
-          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
-            <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
-              <h2 className="text-xl font-bold text-[var(--foreground)]">
-                📊 Transaction Status
-              </h2>
-            </div>
-            <div className="p-4">
-              {/* Current Transaction Status */}
-              {transactionStatus.isProcessing && (
-                <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
-                    <div>
-                      <h3 className="font-semibold text-[var(--foreground)]">
-                        {transactionStatus.type}
-                      </h3>
-                      <p className="text-[var(--text-muted)]">
-                        {transactionStatus.message}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {transactionStatus.error && (
-                <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-[var(--error)] text-xl">❌</div>
-                    <div>
-                      <h3 className="font-semibold text-[var(--foreground)]">
-                        Transaction Failed
-                      </h3>
-                      <p className="text-[var(--error)]">
-                        {transactionStatus.error}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Last Transaction Details */}
-              {lastTransaction && (
-                <div className="bg-[var(--card-bg)] border border-[var(--success)] p-3 rounded-lg">
-                  <h3 className="font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
-                    ✅ Transaction Successful
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-[var(--foreground)]">
-                        Type:
-                      </span>
-                      <span className="text-[var(--text-muted)]">
-                        {lastTransaction.type}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-[var(--foreground)]">
-                        Amount:
-                      </span>
-                      <span className="text-[var(--text-muted)]">
-                        {lastTransaction.amount} {lastTransaction.token}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-[var(--foreground)]">
-                        To:
-                      </span>
-                      <a
-                        href={getAddressLink(lastTransaction.to)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
-                      >
-                        {lastTransaction.to.slice(0, 6)}...
-                        {lastTransaction.to.slice(-4)}
-                        <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                      </a>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-[var(--foreground)]">
-                        Transaction Hash:
-                      </span>
-                      <a
-                        href={getTransactionLink(lastTransaction.hash)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1"
-                      >
-                        {lastTransaction.hash.slice(0, 10)}...
-                        {lastTransaction.hash.slice(-8)}
-                        <ArrowTopRightOnSquareIcon className="h-3 w-3" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+        {/* Balance Display - Only show when authenticated */}
+        {authenticated && privyWallet && (
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 mb-4">
+            <BalanceDisplay
+              ethBalance={ethBalance}
+              pyusdBalance={pyusdBalance}
+              balancesLoading={balancesLoading}
+              onRefresh={() =>
+                fetchBalances(privyWallet.address as `0x${string}`)
+              }
+            />
           </div>
         )}
 
-        {/* Gasless Payment - Main Feature */}
-        <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg mb-6">
-          <div className="bg-[var(--accent)]/10 p-4 rounded-t-lg">
-            <h2 className="text-xl font-bold text-[var(--foreground)]">
-              Send PYUSD (Gasless)
-            </h2>
-          </div>
+        {/* Transaction Status */}
+        <TransactionStatus
+          transactionStatus={transactionStatus}
+          lastTransaction={lastTransaction}
+        />
 
-          <div className="p-4">
-            <div className="space-y-3">
-              {/* Desktop: Single row layout */}
-              <div className="hidden lg:flex gap-4 items-end">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Recipient Address
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={recipient}
-                      onChange={(e) =>
-                        setRecipient(e.target.value as `0x${string}`)
-                      }
-                      placeholder="Enter recipient address"
-                      className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                        recipient && isAddress(recipient)
-                          ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                          : recipient && !isAddress(recipient)
-                          ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                          : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                      }`}
-                    />
-                    {recipient && isAddress(recipient) && (
-                      <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                    )}
-                    {recipient && !isAddress(recipient) && (
-                      <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                    )}
-                  </div>
-                </div>
-                <div className="w-48">
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Amount (PYUSD)
-                  </label>
-                  <input
-                    type="text"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Enter amount (PYUSD)"
-                    className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-                  />
-                </div>
-                <button
-                  className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
-                  onClick={handleGaslessPayment}
-                  disabled={isLoading || !authenticated}
-                >
-                  {isLoading
-                    ? "Processing..."
-                    : !authenticated
-                    ? "Login First"
-                    : "Send PYUSD"}
-                </button>
-              </div>
+        {/* Gasless Payment Form */}
+        <GaslessPaymentForm
+          recipient={recipient}
+          setRecipient={setRecipient}
+          amount={amount}
+          setAmount={setAmount}
+          isLoading={isLoading}
+          authenticated={authenticated}
+          onGaslessPayment={handleGaslessPayment}
+          isFreeTransaction={isFreeTransaction}
+          tierStatus={tierStatus}
+          contractConfig={contractConfig}
+          onTransactionComplete={triggerTierStatusRefresh}
+          onTierStatusRefresh={() => {
+            console.log("🔄 Manual tier status refresh requested");
+            lastTierCheckTimeRef.current = 0; // Reset rate limit
+            triggerTierStatusRefresh();
+          }}
+          lastTierCheckTime={lastTierCheckTimeRef.current}
+          userAddress={
+            (privyWallet?.address as `0x${string}`) || ("" as `0x${string}`)
+          }
+          totalTransactions={totalTransactions}
+        />
 
-              {/* Mobile/Tablet: Two row layout */}
-              <div className="lg:hidden space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Recipient Address
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={recipient}
-                      onChange={(e) =>
-                        setRecipient(e.target.value as `0x${string}`)
-                      }
-                      placeholder="Enter recipient address"
-                      className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                        recipient && isAddress(recipient)
-                          ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                          : recipient && !isAddress(recipient)
-                          ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                          : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                      }`}
-                    />
-                    {recipient && isAddress(recipient) && (
-                      <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                    )}
-                    {recipient && !isAddress(recipient) && (
-                      <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                    )}
-                  </div>
-                </div>
-                <div className="flex gap-3 items-end">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                      Amount (PYUSD)
-                    </label>
-                    <input
-                      type="text"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Enter amount (PYUSD)"
-                      className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-                    />
-                  </div>
-                  <button
-                    className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
-                    onClick={handleGaslessPayment}
-                    disabled={isLoading || !authenticated}
-                  >
-                    {isLoading
-                      ? "Processing..."
-                      : !authenticated
-                      ? "Login First"
-                      : "Send PYUSD"}
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Payment Link Generator */}
+        <PaymentLinkGenerator />
 
-            {/* Transaction Breakdown */}
-            {amount && recipient && isAddress(recipient) && (
-              <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-                <h3 className="text-sm font-medium text-[var(--foreground)] mb-3">
-                  📊 Transaction Breakdown
-                </h3>
-                <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[var(--text-secondary)]">
-                      Transfer to recipient:
-                    </span>
-                    <span className="text-sm font-mono text-[var(--foreground)]">
-                      {amount} PYUSD
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-[var(--text-secondary)]">
-                      Service fee (0.5%):
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {isFreeTransaction === true ? (
-                        <>
-                          <span className="text-sm font-mono text-[var(--text-secondary)] line-through">
-                            {amount
-                              ? (parseFloat(amount) * 0.005).toFixed(6)
-                              : "0.000000"}{" "}
-                            PYUSD
-                          </span>
-                          <span className="text-sm font-mono font-bold text-green-600 dark:text-green-400">
-                            FREE
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-sm font-mono text-[var(--foreground)]">
-                          {amount
-                            ? (parseFloat(amount) * 0.005).toFixed(6)
-                            : "0.000000"}{" "}
-                          PYUSD
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="border-t border-[var(--card-border)] pt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-[var(--foreground)]">
-                        Total amount needed:
-                      </span>
-                      <span className="text-sm font-mono font-medium text-[var(--accent)]">
-                        {isFreeTransaction === true
-                          ? `${amount} PYUSD`
-                          : amount
-                          ? (parseFloat(amount) * 1.005).toFixed(6)
-                          : "0.000000"}{" "}
-                        PYUSD
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* How It Works Section */}
+        <HowItWorksSection />
 
-          {/* Tier Status - At bottom of Send PYUSD section */}
-          {authenticated && privyWallet && (
-            <div className="p-4 border-t border-[var(--card-border)]">
-              <div className="space-y-3">
-                <TierStatusComponent
-                  userAddress={privyWallet.address as `0x${string}`}
-                  tierStatus={tierStatus}
-                  loading={false}
-                  error={null}
-                  onTransactionComplete={triggerTierStatusRefresh}
-                  contractConfig={contractConfig}
-                />
-
-                {/* Manual refresh button for debugging */}
-                <div className="flex items-center justify-between pt-2 border-t border-[var(--card-border)]">
-                  <div className="text-xs text-[var(--text-muted)]">
-                    Last checked:{" "}
-                    {lastTierCheckTimeRef.current
-                      ? new Date(
-                          lastTierCheckTimeRef.current
-                        ).toLocaleTimeString()
-                      : "Never"}
-                  </div>
-                  <button
-                    onClick={() => {
-                      console.log("🔄 Manual tier status refresh requested");
-                      lastTierCheckTimeRef.current = 0; // Reset rate limit
-                      triggerTierStatusRefresh();
-                    }}
-                    className="bg-[var(--accent)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--accent-hover)] transition-colors"
-                  >
-                    🔄 Force Refresh
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Request Payment Link Section */}
-        <CollapsibleSection title="Request Payment Link" icon="🔗">
-          <div className="space-y-3">
-            <p className="text-sm mt-2 text-[var(--text-secondary)]">
-              Generate a payment link that pre-fills the recipient and amount
-              for easy sharing.
-            </p>
-
-            {/* Desktop: Single row layout */}
-            <div className="hidden lg:flex gap-4 items-end">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Recipient Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={paymentLinkRecipient}
-                    onChange={(e) => setPaymentLinkRecipient(e.target.value)}
-                    placeholder="Enter recipient address"
-                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                      paymentLinkRecipient && isAddress(paymentLinkRecipient)
-                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : paymentLinkRecipient &&
-                          !isAddress(paymentLinkRecipient)
-                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                    }`}
-                  />
-                  {paymentLinkRecipient && isAddress(paymentLinkRecipient) && (
-                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                  )}
-                  {paymentLinkRecipient && !isAddress(paymentLinkRecipient) && (
-                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                  )}
-                </div>
-              </div>
-              <div className="w-48">
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Amount (PYUSD)
-                </label>
-                <input
-                  type="text"
-                  value={paymentLinkAmount}
-                  onChange={(e) => setPaymentLinkAmount(e.target.value)}
-                  placeholder="Enter amount (PYUSD)"
-                  className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-                />
-              </div>
-              <button
-                onClick={() => setShowPaymentLink(!showPaymentLink)}
-                disabled={
-                  !paymentLinkRecipient ||
-                  !paymentLinkAmount ||
-                  !isAddress(paymentLinkRecipient)
-                }
-                className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
-              >
-                Generate Link
-              </button>
-            </div>
-
-            {/* Mobile/Tablet: Two row layout */}
-            <div className="lg:hidden space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                  Recipient Address
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={paymentLinkRecipient}
-                    onChange={(e) => setPaymentLinkRecipient(e.target.value)}
-                    placeholder="Enter recipient address"
-                    className={`w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)] ${
-                      paymentLinkRecipient && isAddress(paymentLinkRecipient)
-                        ? "border-[var(--success)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : paymentLinkRecipient &&
-                          !isAddress(paymentLinkRecipient)
-                        ? "border-[var(--error)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                        : "border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)]"
-                    }`}
-                  />
-                  {paymentLinkRecipient && isAddress(paymentLinkRecipient) && (
-                    <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--success)]" />
-                  )}
-                  {paymentLinkRecipient && !isAddress(paymentLinkRecipient) && (
-                    <XCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[var(--error)]" />
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-[var(--foreground)] mb-1">
-                    Amount (PYUSD)
-                  </label>
-                  <input
-                    type="text"
-                    value={paymentLinkAmount}
-                    onChange={(e) => setPaymentLinkAmount(e.target.value)}
-                    placeholder="Enter amount (PYUSD)"
-                    className="w-full px-3 py-2 border border-[var(--card-border)] bg-[var(--card-bg)] text-[var(--foreground)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder-[var(--text-secondary)]"
-                  />
-                </div>
-                <button
-                  onClick={() => setShowPaymentLink(!showPaymentLink)}
-                  disabled={
-                    !paymentLinkRecipient ||
-                    !paymentLinkAmount ||
-                    !isAddress(paymentLinkRecipient)
-                  }
-                  className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap self-end"
-                >
-                  Generate Link
-                </button>
-              </div>
-            </div>
-
-            {showPaymentLink && (
-              <div className="p-4 bg-[var(--background)] border border-[var(--card-border)] rounded-lg">
-                <p className="text-xs text-[var(--text-secondary)] mb-3">
-                  Share this link to pre-fill the payment form:
-                </p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={generatePaymentLink()}
-                    readOnly
-                    className="flex-1 px-3 py-2 text-sm bg-[var(--card-bg)] border border-[var(--card-border)] rounded text-[var(--foreground)] font-mono"
-                  />
-                  <button
-                    onClick={copyPaymentLink}
-                    disabled={paymentLinkCopied}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      paymentLinkCopied
-                        ? "bg-[var(--success)] text-white"
-                        : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                    }`}
-                  >
-                    <ClipboardDocumentIcon className="h-4 w-4" />
-                    {paymentLinkCopied ? "Copied!" : "Copy"}
-                  </button>
-                </div>
-                <div className="mt-2 text-xs text-[var(--text-secondary)]">
-                  💡 Recipients can click this link to automatically fill in the
-                  payment details
-                </div>
-              </div>
-            )}
-          </div>
-        </CollapsibleSection>
-
-        {/* How does this work? */}
-        <CollapsibleSection title="How does this work?" icon="❓">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-bold mb-3 text-[var(--foreground)]">
-                Gasless PYUSD Payments Explained: Smart Contract + EIP-7702 +
-                Pimlico + Privy
-              </h3>
-              <div className="space-y-3 text-sm text-[var(--text-muted)]">
-                <div className="flex items-start gap-2">
-                  <span className="text-[var(--accent)]">✅</span>
-                  <div>
-                    <strong className="text-[var(--foreground)]">
-                      Smart Contract Fee System:
-                    </strong>{" "}
-                    Our deployed contract handles tiered fees automatically - 5
-                    free transactions, then 1 in 5 free, with service fees for
-                    paid transactions.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-[var(--accent)]">✅</span>
-                  <div>
-                    <strong className="text-[var(--foreground)]">
-                      EIP-7702 Smart Account:
-                    </strong>{" "}
-                    Your regular wallet (EOA) temporarily acts as a smart
-                    account, enabling advanced features without changing your
-                    wallet address.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-[var(--accent)]">✅</span>
-                  <div>
-                    <strong className="text-[var(--foreground)]">
-                      Pimlico Gas Sponsorship:
-                    </strong>{" "}
-                    Pimlico pays all gas fees for your transactions, so you
-                    don&apos;t need any ETH for gas.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-[var(--accent)]">✅</span>
-                  <div>
-                    <strong className="text-[var(--foreground)]">
-                      Real PYUSD on Sepolia:
-                    </strong>{" "}
-                    These are actual PYUSD token transfers on the Sepolia
-                    testnet, not simulations.
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-[var(--accent)]">🔧</span>
-                  <div>
-                    <strong className="text-[var(--foreground)]">
-                      Secure Embedded Wallet:
-                    </strong>{" "}
-                    Privy&apos;s embedded wallet provides native EIP-7702
-                    support with enterprise-grade security.
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-              <h4 className="font-bold mb-2 text-[var(--foreground)]">
-                🚀 Technical Details
-              </h4>
-              <div className="text-sm text-[var(--text-muted)] space-y-2">
-                <p>
-                  <strong>GaslessPaymentAccount:</strong> Our deployed smart
-                  contract that handles tiered fee logic, transaction tracking,
-                  and automatic fee collection
-                </p>
-                <p>
-                  <strong>EIP-7702:</strong> Ethereum Improvement Proposal that
-                  allows EOAs to delegate execution to smart contracts
-                </p>
-                <p>
-                  <strong>Pimlico:</strong> Account abstraction infrastructure
-                  provider that sponsors gas fees
-                </p>
-                <p>
-                  <strong>Privy:</strong> Web3 authentication and wallet
-                  infrastructure with embedded wallet support
-                </p>
-                <p>
-                  <strong>PYUSD:</strong> PayPal&apos;s USD-pegged stablecoin on
-                  Ethereum
-                </p>
-              </div>
-            </div>
-          </div>
-        </CollapsibleSection>
-
-        {/* Testing & Diagnostics Section */}
-        <CollapsibleSection title="Testing & Diagnostics" icon="🧪">
-          <div className="space-y-4 mt-2">
-            {/* Basic Transaction Tests */}
-            <div>
-              <p className="text-[var(--text-muted)] mt-3 mb-3">
-                Test different transaction types to verify Privy wallet
-                functionality
-              </p>
-              <div className="flex gap-3 flex-wrap mb-3">
-                <button
-                  className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
-                  onClick={handleTestBasicETHTransfer}
-                  disabled={isLoading || !privyWallet}
-                >
-                  {isLoading
-                    ? "Testing..."
-                    : "Test ETH Transfer (0.001 ETH) - With Gas"}
-                </button>
-                <button
-                  className="bg-[var(--text-secondary)] text-white px-4 py-2 rounded hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
-                  onClick={handleTestBasicPYUSDTransfer}
-                  disabled={isLoading || !privyWallet}
-                >
-                  {isLoading
-                    ? "Testing..."
-                    : "Test PYUSD Transfer (1 PYUSD) - With Gas"}
-                </button>
-              </div>
-              <div className="text-sm text-[var(--text-secondary)]">
-                <p>
-                  🔵 <strong>With Gas:</strong> Regular transactions where you
-                  pay gas fees
-                </p>
-                <p>
-                  ✅ Test with gas first to verify basic Privy functionality
-                </p>
-                <p>💡 Use the main form above for gasless transactions</p>
-              </div>
-            </div>
-
-            {/* Debug Information */}
-            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-              <h4 className="font-bold mb-2 text-[var(--foreground)]">
-                🔍 Debug Information
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Privy Ready:</span>
-                    <span
-                      className={
-                        ready ? "text-[var(--success)]" : "text-[var(--error)]"
-                      }
-                    >
-                      {ready ? "✅ Yes" : "❌ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Authenticated:</span>
-                    <span
-                      className={
-                        authenticated
-                          ? "text-[var(--success)]"
-                          : "text-[var(--error)]"
-                      }
-                    >
-                      {authenticated ? "✅ Yes" : "❌ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">EIP-7702 Support:</span>
-                    <span
-                      className={
-                        !!signAuthorization
-                          ? "text-[var(--success)]"
-                          : "text-[var(--error)]"
-                      }
-                    >
-                      {!!signAuthorization ? "✅ Yes" : "❌ No"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Wallets Count:</span>
-                    <span className="text-[var(--accent)]">
-                      {wallets.length}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Network:</span>
-                    <span className="text-[var(--accent)]">
-                      {sepolia.name} (ID: {sepolia.id})
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Wallet Address:</span>
-                    <span className="text-[var(--warning)] font-mono text-xs">
-                      {privyWallet?.address || "None"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Gasless Payment Status */}
-            <div className="p-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
-              <h4 className="font-bold mb-2 text-[var(--foreground)]">
-                🚀 Gasless Payment Status
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--text-muted)]">
-                      EIP-7702 Support:
-                    </span>
-                    <span
-                      className={
-                        !!signAuthorization
-                          ? "text-[var(--success)]"
-                          : "text-[var(--error)]"
-                      }
-                    >
-                      {!!signAuthorization
-                        ? "✅ Available"
-                        : "❌ Not Available"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--text-muted)]">
-                      Pimlico API Key:
-                    </span>
-                    <span
-                      className={
-                        process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                          ? "text-[var(--success)]"
-                          : "text-[var(--error)]"
-                      }
-                    >
-                      {process.env.NEXT_PUBLIC_PIMLICO_API_KEY
-                        ? "✅ Configured"
-                        : "❌ Missing"}
-                    </span>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--text-muted)]">
-                      Sponsorship Policy:
-                    </span>
-                    <span
-                      className={
-                        process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                          ? "text-[var(--success)]"
-                          : "text-[var(--error)]"
-                      }
-                    >
-                      {process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID
-                        ? "✅ Configured"
-                        : "❌ Missing"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-[var(--text-muted)]">
-                      Implementation:
-                    </span>
-                    <span className="text-[var(--accent)] font-mono text-xs">
-                      {CONTRACTS.GASLESS_PAYMENT_ACCOUNT}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CollapsibleSection>
+        {/* Testing Section */}
+        <TestingSection
+          isLoading={isLoading}
+          privyWallet={privyWallet}
+          onTestBasicETHTransfer={handleTestBasicETHTransfer}
+          onTestBasicPYUSDTransfer={handleTestBasicPYUSDTransfer}
+          ready={ready}
+          authenticated={authenticated}
+          signAuthorization={signAuthorization}
+          wallets={wallets}
+        />
       </div>
     </div>
   );
