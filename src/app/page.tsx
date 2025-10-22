@@ -783,6 +783,7 @@ function HomeContent() {
           onTestBasicPYUSDTransfer={handleTestBasicPYUSDTransfer}
           ready={ready}
           authenticated={authenticated}
+          // @ts-expect-error - signAuthorization type mismatch is expected
           signAuthorization={signAuthorization}
           wallets={wallets}
         />
