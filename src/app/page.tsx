@@ -88,6 +88,16 @@ function HomeContent() {
     setTransactionCompleted((prev) => prev + 1);
   }, []); // Empty dependency array - this function never changes
 
+  // Get the embedded wallet or any Privy wallet
+  const embeddedWallet = wallets.find(
+    (wallet) => wallet.walletClientType === "privy"
+  );
+  const privyWallet = wallets.find(
+    (wallet) =>
+      wallet.walletClientType === "privy" ||
+      wallet.walletClientType === "metamask"
+  );
+
   // Function to check free tier status with rate limiting
   const checkFreeTierStatus = useCallback(
     async (userAddress: `0x${string}`) => {
@@ -268,16 +278,6 @@ function HomeContent() {
   const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
   const [paymentLinkRecipient, setPaymentLinkRecipient] = useState<string>("");
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>("");
-
-  // Get the embedded wallet or any Privy wallet
-  const embeddedWallet = wallets.find(
-    (wallet) => wallet.walletClientType === "privy"
-  );
-  const privyWallet = wallets.find(
-    (wallet) =>
-      wallet.walletClientType === "privy" ||
-      wallet.walletClientType === "metamask"
-  );
 
   // Note: We don't need to set active wallet since we're using Privy's native wallet directly
 
