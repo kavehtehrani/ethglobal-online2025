@@ -67,8 +67,6 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
 - **Blockchain**: Viem for Ethereum interactions
 - **Account Abstraction**: Permissionless for EIP-7702
 - **Gas Sponsorship**: Pimlico for gasless transactions
-- **Smart Contract**: TransactionCounter.sol for tiered fee logic
-- **Tier System**: 5 free transactions, then 1 in 5 free with service fees
 
 ## Testing
 
