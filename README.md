@@ -8,10 +8,10 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
 - ✅ **EIP-7702 Support**: Make your EOA act as a smart account
 - ✅ **Gasless Transactions**: Pimlico sponsors gas fees
 - ✅ **Smart Contract Tier System**: TransactionCounter.sol tracks usage and determines free/paid transactions
-- ✅ **PYUSD Integration**: Real PYUSD transfers on Sepolia
-- ✅ **Compact UI**: Streamlined interface with integrated balance display
-- ✅ **Tier Status Display**: Real-time free/paid transaction indicators
-- ✅ **Clean Architecture**: No Scaffold-ETH complexity
+- ✅ **Modular UI Components**: Refactored into reusable, maintainable components
+- ✅ **Admin Panel**: Contract administration with tier configuration management
+- ✅ **Tier Status Display**: Real-time free/paid transaction indicators with debugging
+- ✅ **Payment Link Generation**: Shareable payment links with pre-filled amounts
 
 ## Setup
 
@@ -44,10 +44,21 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
 
 ## Usage
 
+### User Interface
+
 1. **Login with Privy**: Use email or wallet to authenticate
-2. **View Tier Status**: See your current free/paid transaction status
+2. **View Tier Status**: See your current free/paid transaction status with real-time debugging
 3. **Test Basic Transactions**: Verify Privy wallet works with regular ETH/PYUSD transfers
 4. **Send Gasless Payments**: Use EIP-7702 + Pimlico for gasless PYUSD transfers with smart contract fee logic
+5. **Generate Payment Links**: Create shareable links with pre-filled recipient and amount
+6. **Monitor Balances**: View ETH and PYUSD balances with refresh functionality
+
+### Admin Panel
+
+1. **Access Admin Panel**: Navigate to `/admin` (contract owner only)
+2. **View Contract Status**: Check contract configuration and owner information
+3. **Update Tier Settings**: Modify free tier limit and ratio (e.g., 5 free, then 1 in 3 free)
+4. **Monitor Usage**: View current tier configuration and transaction counts
 
 ## Architecture
 
@@ -59,47 +70,31 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
 - **Smart Contract**: TransactionCounter.sol for tiered fee logic
 - **Tier System**: 5 free transactions, then 1 in 5 free with service fees
 
-## Key Files
-
-- `src/app/page.tsx` - Main application interface with compact layout
-- `src/components/TierStatus.tsx` - Tier status display component
-- `src/lib/privyGaslessPayment.ts` - Gasless payment implementation
-- `src/lib/basicPrivyTest.ts` - Basic transaction tests
-- `src/lib/constants.ts` - Configuration constants
-- `src/components/PrivyProviderWrapper.tsx` - Privy provider setup
-- `contracts/TransactionCounter.sol` - Smart contract for tiered fee logic
-- `test/TransactionCounter.sol` - Comprehensive smart contract tests
-
 ## Testing
 
-The app includes comprehensive tests to verify:
+The app includes comprehensive testing capabilities:
 
-1. **Smart Contract Tests**: TransactionCounter.sol with 20+ test cases
-2. **Privy wallet connectivity**: Basic ETH/PYUSD transfers
-3. **Gasless payment implementation**: EIP-7702 + Pimlico integration
-4. **Tier system logic**: Free/paid transaction calculations
-5. **UI components**: Tier status display and compact layout
+1. **Smart Contract Tests**: 20+ test cases covering all tier logic scenarios
+2. **Wallet Connectivity**: Basic ETH/PYUSD transfer testing
+3. **Gasless Payments**: EIP-7702 + Pimlico integration verification
+4. **Tier System**: Real-time free/paid transaction calculations with debugging
+5. **Admin Functions**: Contract configuration and tier management testing
+6. **Payment Links**: URL parameter handling and sharing functionality
 
 ## Network
 
 - **Chain**: Sepolia Testnet
-- **PYUSD Contract**: `0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9`
-- **EIP-7702 Implementation**: `0xe6Cae83BdE06E4c305530e199D7217f42808555B`
-- **TransactionCounter Contract**: Deployed smart contract for tier tracking
+- **PYUSD Contract**: [`0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9`](https://docs.paxos.com/guides/stablecoin/pyusd/testnet)
+- **EIP-7702 Implementation**: [`0xe6Cae83BdE06E4c305530e199D7217f42808555B`](https://eth-sepolia.blockscout.com/address/0xe6Cae83BdE06E4c305530e199D7217f42808555B?tab=contract)
+- **TransactionCounter Contract**: Deployed smart contract for tier tracking at [`https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04)
 
 ## Smart Contract Integration
 
 The `TransactionCounter.sol` contract implements a tiered fee system:
 
-- **Free Tier**: First 5 transactions are completely free
-- **Paid Tier**: After 5 transactions, every 5th transaction is free (1 in 5)
+- **Free Tier**: First m transactions are free to let users try the app
+- **Paid Tier**: After n transactions, every 5th transaction is free (e.g. 1 in 5)
 - **Service Fees**: Paid transactions include 0.5% service fee
 - **Real-time Tracking**: Contract tracks user transaction counts
 - **EIP-7702 Integration**: Works seamlessly with EIP-7702 transactions
-
-## UI Improvements
-
-- **Compact Layout**: Integrated balance display in authentication section
-- **Tier Status**: Real-time free/paid transaction indicators
-- **Responsive Design**: Optimized for desktop and mobile
-- **Theme Support**: Light/dark mode with proper color theming
+- **Admin Controls**: Contract owner can update tier configuration for the fee parameters
