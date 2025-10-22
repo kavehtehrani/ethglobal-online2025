@@ -3,14 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, createWalletClient, http, custom } from "viem";
 import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
 import { notification } from "@/lib/notifications";
 import { getAddressLink } from "@/lib/explorer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   ArrowTopRightOnSquareIcon,
-  CheckCircleIcon,
   XCircleIcon,
   ShieldCheckIcon,
   Cog6ToothIcon,
@@ -63,6 +62,10 @@ export default function AdminPage() {
   const [newRatio, setNewRatio] = useState<string>("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null);
+  const [lastTransactionHash, setLastTransactionHash] = useState<string | null>(
+    null
+  );
 
   const privyWallet = wallets.find(
     (wallet) =>
@@ -118,6 +121,10 @@ export default function AdminPage() {
 
     setIsLoadingConfig(true);
     try {
+      console.log("🔄 Loading current configuration from contract...");
+      console.log("Contract address:", CONTRACTS.TRANSACTION_COUNTER);
+      console.log("RPC endpoint:", RPC_ENDPOINTS.SEPOLIA);
+
       const publicClient = createPublicClient({
         chain: sepolia,
         transport: http(RPC_ENDPOINTS.SEPOLIA),
@@ -133,13 +140,17 @@ export default function AdminPage() {
       const limit = Number(config[0]);
       const ratio = Number(config[1]);
 
+      console.log("📊 Raw config from contract:", config);
+      console.log("📊 Parsed config:", { limit, ratio });
+
       setCurrentConfig({ limit, ratio });
       setNewLimit(limit.toString());
       setNewRatio(ratio.toString());
 
-      console.log("Current config loaded:", { limit, ratio });
+      console.log("✅ Current config loaded successfully:", { limit, ratio });
+      setLastRefreshTime(new Date());
     } catch (error) {
-      console.error("Error loading current config:", error);
+      console.error("❌ Error loading current config:", error);
       notification.error("Failed to load current configuration");
     } finally {
       setIsLoadingConfig(false);
@@ -163,22 +174,57 @@ export default function AdminPage() {
 
     setIsUpdating(true);
     try {
-      // For demo purposes, we'll simulate the transaction
-      // In a real implementation, you would use the wallet to sign the transaction
-      notification.info("Updating configuration...");
+      console.log("🚀 Sending transaction to update contract configuration...");
+      console.log("New values:", { limit, ratio });
 
-      // Simulate transaction delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http(RPC_ENDPOINTS.SEPOLIA),
+      });
 
+      // Create wallet client for signing using Privy wallet
+      const walletClient = createWalletClient({
+        account: privyWallet.address as `0x${string}`,
+        chain: sepolia,
+        transport: custom(await privyWallet.getEthereumProvider()),
+      });
+
+      // Prepare the transaction
+      const { request } = await publicClient.simulateContract({
+        address: CONTRACTS.TRANSACTION_COUNTER,
+        abi: TRANSACTION_COUNTER_ADMIN_ABI,
+        functionName: "updateFreeTierConfig",
+        args: [BigInt(limit), BigInt(ratio)],
+        account: privyWallet.address as `0x${string}`,
+      });
+
+      console.log("📝 Transaction prepared, sending...");
+
+      // Send the transaction
+      const hash = await walletClient.writeContract(request);
+
+      console.log("✅ Transaction sent! Hash:", hash);
+      setLastTransactionHash(hash);
+      notification.info(`Transaction sent! Hash: ${hash}`);
+
+      // Wait for transaction to be mined
+      console.log("⏳ Waiting for transaction to be mined...");
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+      console.log("✅ Transaction mined! Receipt:", receipt);
       notification.success(
-        `Configuration updated! New limit: ${limit}, New ratio: ${ratio}`
+        `Configuration updated! New limit: ${limit}, New ratio: ${ratio}. Transaction: ${hash}`
       );
 
       // Reload the configuration
       await loadCurrentConfig();
     } catch (error) {
-      console.error("Error updating configuration:", error);
-      notification.error("Failed to update configuration");
+      console.error("❌ Error updating configuration:", error);
+      notification.error(
+        `Failed to update configuration: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -320,9 +366,31 @@ export default function AdminPage() {
         {/* Current Configuration */}
         {isOwner && (
           <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-bold text-[var(--foreground)] mb-4">
-              Current Configuration
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-[var(--foreground)]">
+                Current Configuration
+              </h2>
+              <div className="flex items-center gap-4">
+                {lastRefreshTime && (
+                  <div className="text-sm text-[var(--text-muted)]">
+                    Last updated: {lastRefreshTime.toLocaleTimeString()}
+                  </div>
+                )}
+                {lastTransactionHash && (
+                  <div className="text-sm">
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${lastTransactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline inline-flex items-center gap-1"
+                    >
+                      Last TX: {lastTransactionHash.slice(0, 10)}...
+                      <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
             {isLoadingConfig ? (
               <div className="animate-pulse space-y-3">
                 <div className="h-4 bg-[var(--card-border)] rounded w-3/4"></div>
@@ -358,6 +426,20 @@ export default function AdminPage() {
                 Failed to load current configuration
               </div>
             )}
+
+            {/* Debug Information */}
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <h3 className="text-sm font-medium text-[var(--foreground)] mb-2">
+                🔍 Debug Information
+              </h3>
+              <div className="text-xs text-[var(--text-muted)] space-y-1">
+                <div>Contract Address: {CONTRACTS.TRANSACTION_COUNTER}</div>
+                <div>RPC Endpoint: {RPC_ENDPOINTS.SEPOLIA}</div>
+                <div>
+                  Chain: {sepolia.name} (ID: {sepolia.id})
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -417,11 +499,14 @@ export default function AdminPage() {
                 </button>
 
                 <button
-                  onClick={loadCurrentConfig}
+                  onClick={() => {
+                    console.log("🔄 Force refresh requested");
+                    loadCurrentConfig();
+                  }}
                   disabled={isLoadingConfig}
                   className="bg-[var(--text-secondary)] text-white px-4 py-3 rounded-lg hover:bg-[var(--text-muted)] disabled:opacity-50 transition-colors"
                 >
-                  {isLoadingConfig ? "Loading..." : "Refresh"}
+                  {isLoadingConfig ? "Loading..." : "🔄 Force Refresh"}
                 </button>
               </div>
             </div>

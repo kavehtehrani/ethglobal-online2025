@@ -78,6 +78,10 @@ function HomeContent() {
     nextFreeTransaction: number;
     isFree: boolean;
   } | null>(null);
+  const [contractConfig, setContractConfig] = useState<{
+    freeTierLimit: number;
+    freeTierRatio: number;
+  } | null>(null);
   const [transactionCompleted, setTransactionCompleted] = useState<number>(0);
   const lastTierCheckTimeRef = useRef<number>(0);
   const isCheckingTierRef = useRef<boolean>(false);
@@ -153,6 +157,12 @@ function HomeContent() {
         const totalTransactions = Number(userCount);
         const freeTierLimit = Number(tierConfig[0]);
         const freeTierRatio = Number(tierConfig[1]);
+
+        // Update contract config for display
+        setContractConfig({
+          freeTierLimit,
+          freeTierRatio,
+        });
 
         // Calculate detailed tier status
         let isFree = false;
@@ -1174,13 +1184,38 @@ function HomeContent() {
           {/* Tier Status - At bottom of Send PYUSD section */}
           {authenticated && privyWallet && (
             <div className="p-4 border-t border-[var(--card-border)]">
-              <TierStatusComponent
-                userAddress={privyWallet.address as `0x${string}`}
-                tierStatus={tierStatus}
-                loading={false}
-                error={null}
-                onTransactionComplete={triggerTierStatusRefresh}
-              />
+              <div className="space-y-3">
+                <TierStatusComponent
+                  userAddress={privyWallet.address as `0x${string}`}
+                  tierStatus={tierStatus}
+                  loading={false}
+                  error={null}
+                  onTransactionComplete={triggerTierStatusRefresh}
+                  contractConfig={contractConfig}
+                />
+
+                {/* Manual refresh button for debugging */}
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--card-border)]">
+                  <div className="text-xs text-[var(--text-muted)]">
+                    Last checked:{" "}
+                    {lastTierCheckTimeRef.current
+                      ? new Date(
+                          lastTierCheckTimeRef.current
+                        ).toLocaleTimeString()
+                      : "Never"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      console.log("🔄 Manual tier status refresh requested");
+                      lastTierCheckTimeRef.current = 0; // Reset rate limit
+                      triggerTierStatusRefresh();
+                    }}
+                    className="bg-[var(--accent)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--accent-hover)] transition-colors"
+                  >
+                    🔄 Force Refresh
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

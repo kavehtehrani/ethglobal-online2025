@@ -17,6 +17,11 @@ interface TierStatusProps {
   loading: boolean;
   error: string | null;
   onTransactionComplete?: () => void;
+  // Add contract config for display
+  contractConfig?: {
+    freeTierLimit: number;
+    freeTierRatio: number;
+  } | null;
 }
 
 export function TierStatusComponent({
@@ -25,6 +30,7 @@ export function TierStatusComponent({
   loading,
   error,
   onTransactionComplete,
+  contractConfig,
 }: TierStatusProps) {
   const [isServiceConfigExpanded, setIsServiceConfigExpanded] = useState(false);
 
@@ -135,11 +141,16 @@ export function TierStatusComponent({
           <div className="space-y-2 text-sm text-[var(--text-secondary)]">
             <div className="flex justify-between">
               <span>Free Tier Limit:</span>
-              <span>5 transactions</span>
+              <span>
+                {contractConfig?.freeTierLimit || "Loading..."} transactions
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Free Tier Ratio:</span>
-              <span>1 in 2 transactions</span>
+              <span>
+                1 in {contractConfig?.freeTierRatio || "Loading..."}{" "}
+                transactions
+              </span>
             </div>
             <div className="flex justify-between">
               <span>Current Status:</span>
