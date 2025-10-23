@@ -593,7 +593,8 @@ function HomeContent() {
                   height={40}
                   className="rounded-lg"
                 />
-                <h1 className="text-3xl font-bold text-[var(--foreground)]">Gasless PYUSD Payments
+                <h1 className="text-3xl font-bold text-[var(--foreground)]">
+                  Gasless PYUSD Payments
                 </h1>
               </div>
               <p className="text-[var(--text-secondary)] mt-1">
