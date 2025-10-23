@@ -48,7 +48,7 @@ const TRANSACTION_COUNTER_ABI = [
 
 // Component that uses useSearchParams - needs Suspense boundary
 function HomeContent() {
-  const { ready, authenticated, sendTransaction, login, logout } = usePrivy();
+  const { ready, authenticated, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
   const searchParams = useSearchParams();

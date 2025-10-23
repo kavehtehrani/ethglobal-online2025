@@ -1,17 +1,18 @@
 "use client";
 
-import { usePrivy, useWallets, useCreateWallet } from "@privy-io/react-auth";
-import { getAddressLink } from "@/lib/explorer";
+import { usePrivy, useCreateWallet } from "@privy-io/react-auth";
 import Image from "next/image";
 
 interface WalletSectionProps {
   onWalletCreated?: () => void;
   authenticated: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   privyWallet: any;
   ethBalance: string;
   pyusdBalance: string;
   balancesLoading: boolean;
   totalTransactions: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tierStatus: any;
   fetchBalances: (address: `0x${string}`) => void;
 }
@@ -24,7 +25,6 @@ export function WalletSection({
   pyusdBalance,
   balancesLoading,
   totalTransactions,
-  tierStatus,
   fetchBalances,
 }: WalletSectionProps) {
   const { login, logout } = usePrivy();
