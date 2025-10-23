@@ -49,11 +49,6 @@ const TRANSACTION_COUNTER_ABI = [
 
 // Component that uses useSearchParams - needs Suspense boundary
 function HomeContent() {
-  const renderCountRef = useRef<number>(0);
-  const useEffectCountRef = useRef<number>(0);
-
-  renderCountRef.current += 1;
-
   const { ready, authenticated, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
   const { signAuthorization } = useSign7702Authorization();
@@ -184,8 +179,7 @@ function HomeContent() {
           isFree,
         });
         setTotalTransactions(totalTransactions);
-      } catch (error) {
-        console.error("Error checking free tier status:", error);
+      } catch {
         setIsFreeTransaction(null);
         setTierStatus(null);
       } finally {
@@ -211,7 +205,6 @@ function HomeContent() {
 
   // Check free tier status when wallet address changes
   useEffect(() => {
-    useEffectCountRef.current += 1;
     const currentWalletAddress = wallets.length > 0 ? wallets[0].address : null;
 
     // Check tier status when authenticated and wallet is available
@@ -226,8 +219,6 @@ function HomeContent() {
 
   // Refresh free tier status after transaction completion
   useEffect(() => {
-    useEffectCountRef.current += 1;
-
     if (transactionCompleted > 0) {
       const currentWalletAddress =
         wallets.length > 0 ? wallets[0].address : null;
@@ -299,8 +290,7 @@ function HomeContent() {
 
       const pyusdBalanceFormatted = formatUnits(pyusdBalanceWei, 6); // PYUSD has 6 decimals
       setPyusdBalance(pyusdBalanceFormatted);
-    } catch (error) {
-      console.error("Error fetching balances:", error);
+    } catch {
       setEthBalance("0");
       setPyusdBalance("0");
     } finally {
@@ -310,8 +300,6 @@ function HomeContent() {
 
   // Fetch balances when wallet address changes
   useEffect(() => {
-    useEffectCountRef.current += 1;
-
     if (privyWallet?.address) {
       fetchBalances(privyWallet.address as `0x${string}`);
     }
@@ -386,7 +374,6 @@ function HomeContent() {
         }
       }
     } catch (error) {
-      console.error("Basic ETH transfer error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       setTransactionStatus({
@@ -466,7 +453,6 @@ function HomeContent() {
         }
       }
     } catch (error) {
-      console.error("Basic PYUSD transfer error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       setTransactionStatus({
@@ -566,7 +552,6 @@ function HomeContent() {
         });
       }
     } catch (error) {
-      console.error("Gasless payment error:", error);
       setTransactionStatus({
         isProcessing: false,
         type: "Gasless PYUSD Payment",
@@ -675,8 +660,9 @@ function HomeContent() {
           onTestBasicPYUSDTransfer={handleTestBasicPYUSDTransfer}
           ready={ready}
           authenticated={authenticated}
-          // @ts-expect-error - signAuthorization type mismatch is expected
-          signAuthorization={signAuthorization}
+          signAuthorization={
+            signAuthorization as (input: unknown) => Promise<unknown>
+          }
           wallets={wallets}
         />
       </div>

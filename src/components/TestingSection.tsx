@@ -34,7 +34,11 @@ export function TestingSection({
   wallets,
 }: TestingSectionProps) {
   return (
-    <CollapsibleSection title="Testing & Diagnostics" icon="🧪">
+    <CollapsibleSection
+      title="Testing & Diagnostics"
+      icon="🧪"
+      defaultOpen={false}
+    >
       <div className="space-y-4 mt-2">
         {/* Basic Transaction Tests */}
         <div>

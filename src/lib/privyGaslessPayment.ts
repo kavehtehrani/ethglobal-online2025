@@ -163,16 +163,8 @@ export async function executePrivyGaslessPayment({
   if (totalTransactions < freeTierLimit) {
     isFree = true;
   } else {
-    // const transactionsAfterLimit = totalTransactions - freeTierLimit;
     const remainder = (totalTransactions - freeTierLimit) % freeTierRatio;
     isFree = remainder === 0;
-  }
-
-  // Debug logging for free tier calculation
-
-  if (totalTransactions < freeTierLimit) {
-  } else {
-    const transactionsAfterLimit = totalTransactions - freeTierLimit;
   }
 
   // Step 3: Create wallet client from Privy wallet
