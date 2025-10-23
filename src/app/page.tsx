@@ -24,6 +24,7 @@ import { TestingSection } from "@/components/TestingSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { isAddress } from "viem";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 // Transaction Counter ABI
 const TRANSACTION_COUNTER_ABI = [
@@ -584,9 +585,17 @@ function HomeContent() {
           <div className="flex justify-between items-start mb-4">
             <div className="w-16"></div>
             <div className="flex-1 text-center">
-              <h1 className="text-3xl font-bold text-[var(--foreground)] mb-2">
-                🚀 Gasless PYUSD Payments
-              </h1>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <Image
+                  src="/pyusd.png"
+                  alt="PYUSD Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-lg"
+                />
+                <h1 className="text-3xl font-bold text-[var(--foreground)]">Gasless PYUSD Payments
+                </h1>
+              </div>
               <p className="text-[var(--text-secondary)] mt-1">
                 Send PYUSD on Sepolia without paying gas fees!
               </p>

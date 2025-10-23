@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface BalanceDisplayProps {
   ethBalance: string;
   pyusdBalance: string;
@@ -44,7 +46,16 @@ export function BalanceDisplay({
 
         {/* PYUSD Balance */}
         <div className="bg-[var(--card-bg)] border border-[var(--card-border)] p-2 rounded">
-          <div className="text-xs text-[var(--text-muted)] mb-1">PYUSD</div>
+          <div className="flex items-center gap-2 mb-1">
+            <Image
+              src="/pyusd.png"
+              alt="PYUSD"
+              width={16}
+              height={16}
+              className="rounded"
+            />
+            <div className="text-xs text-[var(--text-muted)]">PYUSD</div>
+          </div>
           {balancesLoading ? (
             <div className="animate-pulse">
               <div className="h-4 bg-[var(--card-border)] rounded w-16"></div>
