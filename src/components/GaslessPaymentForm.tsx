@@ -256,7 +256,6 @@ export function GaslessPaymentForm({
               </div>
               <button
                 onClick={() => {
-                  console.log("🔄 Manual tier status refresh requested");
                   onTierStatusRefresh();
                 }}
                 className="bg-[var(--accent)] text-white px-3 py-1 rounded text-xs hover:bg-[var(--accent-hover)] transition-colors"

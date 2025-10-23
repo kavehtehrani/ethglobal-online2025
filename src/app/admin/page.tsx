@@ -99,13 +99,6 @@ export default function AdminPage() {
 
       setIsOwner(isCurrentUserOwner);
 
-      if (isCurrentUserOwner) {
-        console.log("✅ User is contract owner");
-      } else {
-        console.log("❌ User is not contract owner");
-        console.log("Contract owner:", contractOwner);
-        console.log("User address:", privyWallet.address);
-      }
     } catch (error) {
       console.error("Error checking owner status:", error);
       setIsOwner(false);
@@ -121,9 +114,6 @@ export default function AdminPage() {
 
     setIsLoadingConfig(true);
     try {
-      console.log("🔄 Loading current configuration from contract...");
-      console.log("Contract address:", CONTRACTS.TRANSACTION_COUNTER);
-      console.log("RPC endpoint:", RPC_ENDPOINTS.SEPOLIA);
 
       const publicClient = createPublicClient({
         chain: sepolia,
@@ -140,14 +130,11 @@ export default function AdminPage() {
       const limit = Number(config[0]);
       const ratio = Number(config[1]);
 
-      console.log("📊 Raw config from contract:", config);
-      console.log("📊 Parsed config:", { limit, ratio });
 
       setCurrentConfig({ limit, ratio });
       setNewLimit(limit.toString());
       setNewRatio(ratio.toString());
 
-      console.log("✅ Current config loaded successfully:", { limit, ratio });
       setLastRefreshTime(new Date());
     } catch (error) {
       console.error("❌ Error loading current config:", error);
@@ -174,8 +161,6 @@ export default function AdminPage() {
 
     setIsUpdating(true);
     try {
-      console.log("🚀 Sending transaction to update contract configuration...");
-      console.log("New values:", { limit, ratio });
 
       const publicClient = createPublicClient({
         chain: sepolia,
@@ -198,20 +183,16 @@ export default function AdminPage() {
         account: privyWallet.address as `0x${string}`,
       });
 
-      console.log("📝 Transaction prepared, sending...");
 
       // Send the transaction
       const hash = await walletClient.writeContract(request);
 
-      console.log("✅ Transaction sent! Hash:", hash);
       setLastTransactionHash(hash);
       notification.info(`Transaction sent! Hash: ${hash}`);
 
       // Wait for transaction to be mined
-      console.log("⏳ Waiting for transaction to be mined...");
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      await publicClient.waitForTransactionReceipt({ hash });
 
-      console.log("✅ Transaction mined! Receipt:", receipt);
       notification.success(
         `Configuration updated! New limit: ${limit}, New ratio: ${ratio}. Transaction: ${hash}`
       );
@@ -500,7 +481,6 @@ export default function AdminPage() {
 
                 <button
                   onClick={() => {
-                    console.log("🔄 Force refresh requested");
                     loadCurrentConfig();
                   }}
                   disabled={isLoadingConfig}

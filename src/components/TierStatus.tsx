@@ -27,7 +27,6 @@ interface TierStatusProps {
 }
 
 export function TierStatusComponent({
-  userAddress,
   tierStatus,
   loading,
   error,
@@ -37,42 +36,11 @@ export function TierStatusComponent({
 }: TierStatusProps) {
   const [isServiceConfigExpanded, setIsServiceConfigExpanded] = useState(false);
 
-  // Debug logging
-  console.log("🔍 TierStatusComponent received:", {
-    userAddress,
-    tierStatus,
-    loading,
-    error,
-    totalTransactions,
-    contractConfig,
-  });
-
-  // Additional debugging for tier status display
-  if (tierStatus) {
-    console.log("🎯 TierStatus Display Debug:");
-    console.log("  📊 totalTransactions:", totalTransactions);
-    console.log("  🆓 isFree:", tierStatus.isFree);
-    console.log(
-      "  🔢 freeTransactionsRemaining:",
-      tierStatus.freeTransactionsRemaining
-    );
-    console.log("  ⏭️ nextFreeTransaction:", tierStatus.nextFreeTransaction);
-    console.log(
-      "  🎯 Display text will be:",
-      tierStatus.isFree
-        ? tierStatus.freeTransactionsRemaining > 0
-          ? `${tierStatus.freeTransactionsRemaining} free transactions remaining`
-          : "This transaction is on us! 🎉"
-        : `Next free transaction in ${tierStatus.nextFreeTransaction} transactions`
-    );
-  }
-
   // Listen for transaction completion and refresh tier status
   useEffect(() => {
     if (onTransactionComplete) {
       // Add a small delay to ensure the transaction is confirmed on-chain
       const timeoutId = setTimeout(() => {
-        console.log("🔄 Refreshing tier status after transaction completion");
         onTransactionComplete();
       }, 2000);
 

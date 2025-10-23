@@ -99,7 +99,6 @@ export async function executePrivyGaslessPayment({
     nonce: number;
   }>;
 }) {
-  console.log("🚀 Starting Privy gasless payment...");
   console.log("📊 Payment details:", {
     recipient: recipientAddress,
     amount,
@@ -111,8 +110,6 @@ export async function executePrivyGaslessPayment({
     chain: sepolia,
     transport: http(RPC_ENDPOINTS.SEPOLIA),
   });
-
-  console.log("✅ Public client created");
 
   // Step 2: Check PYUSD balance
   const balance = await publicClient.readContract({
@@ -133,8 +130,6 @@ export async function executePrivyGaslessPayment({
     );
   }
 
-  console.log("✅ PYUSD balance check passed");
-
   // Step 2.5: Calculate fee (0.5% with min/max limits)
   const feeBasisPoints = 50; // 0.5%
   const minFee = parseUnits("0.01", 6); // 0.01 PYUSD minimum
@@ -148,10 +143,7 @@ export async function executePrivyGaslessPayment({
       ? maxFee
       : calculatedFee;
 
-  console.log("💰 Fee calculated:", formatUnits(feeAmount, 6), "PYUSD");
-
   // Step 2.6: Check if transaction should be free (off-chain calculation)
-  console.log("🔍 Checking transaction tier status...");
 
   const [userCount, tierConfig] = await Promise.all([
     publicClient.readContract({
@@ -182,7 +174,6 @@ export async function executePrivyGaslessPayment({
     isFree = remainder === 0;
   }
 
-  console.log("🎯 Transaction is free:", isFree);
   console.log("📊 User stats:", {
     totalTransactions,
     freeTierLimit,
@@ -190,25 +181,14 @@ export async function executePrivyGaslessPayment({
   });
 
   // Debug logging for free tier calculation
-  console.log("🔍 DEBUG - Free tier calculation:");
-  console.log("  - totalTransactions:", totalTransactions);
-  console.log("  - freeTierLimit:", freeTierLimit);
-  console.log("  - freeTierRatio:", freeTierRatio);
 
   if (totalTransactions < freeTierLimit) {
-    console.log("  - Status: Within free tier limit");
-    console.log("  - isFree: true");
   } else {
     const transactionsAfterLimit = totalTransactions - freeTierLimit;
     const remainder = transactionsAfterLimit % freeTierRatio;
-    console.log("  - transactionsAfterLimit:", transactionsAfterLimit);
-    console.log("  - remainder:", remainder);
-    console.log("  - isFree:", remainder === 0);
-    console.log("  - Status:", remainder === 0 ? "Free (1 in N)" : "Paid");
   }
 
   // Step 3: Create wallet client from Privy wallet
-  console.log("🔧 Creating wallet client from Privy wallet...");
 
   const walletClient = createWalletClient({
     account: privyWallet.address as Hex,
@@ -217,10 +197,7 @@ export async function executePrivyGaslessPayment({
     transport: custom((await privyWallet.getEthereumProvider()) as any),
   });
 
-  console.log("✅ Wallet client created");
-
   // Step 4: Create Pimlico client
-  console.log("🏗️ Creating Pimlico client...");
 
   const pimlicoApiKey = process.env.NEXT_PUBLIC_PIMLICO_API_KEY;
   if (!pimlicoApiKey) {
@@ -233,10 +210,7 @@ export async function executePrivyGaslessPayment({
     ),
   });
 
-  console.log("✅ Pimlico client created");
-
   // Step 5: Create simple smart account (following Pimlico repo exactly)
-  console.log("🏗️ Creating simple smart account...");
 
   const simpleSmartAccount = await toSimpleSmartAccount({
     owner: walletClient,
@@ -248,10 +222,7 @@ export async function executePrivyGaslessPayment({
     address: privyWallet.address,
   });
 
-  console.log("✅ Simple smart account created");
-
   // Step 6: Create smart account client
-  console.log("🏗️ Creating smart account client...");
 
   const smartAccountClient = createSmartAccountClient({
     account: simpleSmartAccount,
@@ -267,10 +238,7 @@ export async function executePrivyGaslessPayment({
     },
   });
 
-  console.log("✅ Smart account client created");
-
   // Step 7: Sign EIP-7702 authorization (following Privy + Pimlico documentation exactly)
-  console.log("🔐 Signing EIP-7702 authorization...");
 
   const authorization = await signAuthorization({
     contractAddress: CONTRACTS.SIMPLE_ACCOUNT, // Use working SimpleAccount for EIP-7702 authorization
@@ -279,8 +247,6 @@ export async function executePrivyGaslessPayment({
       address: privyWallet.address,
     }),
   });
-
-  console.log("✅ EIP-7702 authorization signed");
 
   // Step 8: Build transfer calls based on free tier status
   const recipientTransferData = encodeFunctionData({
@@ -333,10 +299,7 @@ export async function executePrivyGaslessPayment({
       data: feeTransferData,
       value: BigInt(0),
     });
-
-    console.log("📝 Batch transfer data encoded (with fee)");
   } else {
-    console.log("📝 Transfer data encoded (free transaction)");
   }
 
   // Always add incrementCount call to the batch
@@ -352,12 +315,8 @@ export async function executePrivyGaslessPayment({
     value: BigInt(0),
   });
 
-  console.log("📊 Added incrementCount to batch transaction");
-
   // Debug logging for batch transaction
-  console.log("🔍 DEBUG - Batch transaction calls:");
-  console.log("  - Total calls:", calls.length);
-  console.log("  - isFree:", isFree);
+
   calls.forEach((call, index) => {
     console.log(`  - Call ${index + 1}:`, {
       to: call.to,
@@ -367,7 +326,6 @@ export async function executePrivyGaslessPayment({
   });
 
   // Step 9: Send sponsored transaction
-  console.log("🚀 Sending sponsored transaction...");
 
   const sponsorshipPolicyId = process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID;
   if (!sponsorshipPolicyId) {
@@ -384,8 +342,6 @@ export async function executePrivyGaslessPayment({
     authorization,
   });
 
-  console.log("✅ Gasless transaction submitted!");
-  console.log("Transaction hash:", hash);
   console.log(
     "📊 Transaction counter incremented as part of batch transaction"
   );

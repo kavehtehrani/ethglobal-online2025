@@ -30,7 +30,6 @@ export async function testBasicPrivyTransaction({
   recipientAddress: `0x${string}`;
   amount?: string;
 }) {
-  console.log("🧪 Testing basic Privy transaction...");
 
   if (!privySendTransaction) {
     throw new Error("Privy sendTransaction not available");
@@ -47,11 +46,8 @@ export async function testBasicPrivyTransaction({
     address: walletAddress,
   });
 
-  console.log("ETH Balance:", balance.toString(), "wei");
-  console.log("ETH Balance:", parseEther(balance.toString()), "ETH");
 
   const amountInWei = parseEther(amount);
-  console.log("Amount to send:", amountInWei.toString(), "wei");
 
   if (balance < amountInWei) {
     throw new Error(
@@ -60,7 +56,6 @@ export async function testBasicPrivyTransaction({
   }
 
   // Send simple ETH transfer using Privy's sendTransaction
-  console.log("🚀 Sending ETH transfer...");
   const hash = await privySendTransaction(
     {
       to: recipientAddress,
@@ -75,8 +70,6 @@ export async function testBasicPrivyTransaction({
     }
   );
 
-  console.log("✅ Transaction sent!");
-  console.log("Transaction hash:", hash);
 
   return {
     success: true,
@@ -99,7 +92,6 @@ export async function testBasicPYUSDTransfer({
   recipientAddress: `0x${string}`;
   amount?: string;
 }) {
-  console.log("🧪 Testing basic PYUSD transfer...");
 
   if (!privySendTransaction) {
     throw new Error("Privy sendTransaction not available");
@@ -142,10 +134,8 @@ export async function testBasicPYUSDTransfer({
     args: [walletAddress],
   });
 
-  console.log("PYUSD Balance:", balance.toString());
 
   const amountInWei = BigInt(parseFloat(amount) * 10 ** 6); // PYUSD has 6 decimals
-  console.log("Amount to send:", amountInWei.toString(), "wei");
 
   if (balance < amountInWei) {
     throw new Error(
@@ -154,7 +144,6 @@ export async function testBasicPYUSDTransfer({
   }
 
   // Send PYUSD transfer using Privy's sendTransaction
-  console.log("🚀 Sending PYUSD transfer...");
   const hash = await privySendTransaction(
     {
       to: PYUSD_ADDRESS,
@@ -173,8 +162,6 @@ export async function testBasicPYUSDTransfer({
     }
   );
 
-  console.log("✅ PYUSD transfer sent!");
-  console.log("Transaction hash:", hash);
 
   return {
     success: true,

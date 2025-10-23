@@ -25,9 +25,7 @@ export function AuthenticationSection({
 
   const handleCreateEmbeddedWallet = async () => {
     try {
-      console.log("🔧 Creating embedded wallet...");
       await createWallet();
-      console.log("✅ Embedded wallet created!");
       notification.success("Embedded wallet created successfully!");
       onWalletCreated?.();
     } catch (error) {

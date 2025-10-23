@@ -53,7 +53,6 @@ function HomeContent() {
   const useEffectCountRef = useRef<number>(0);
 
   renderCountRef.current += 1;
-  console.log(`🔄 HomeContent rendering #${renderCountRef.current}`);
 
   const { ready, authenticated, sendTransaction } = usePrivy();
   const { wallets } = useWallets();
@@ -87,14 +86,10 @@ function HomeContent() {
 
   // Function to trigger tier status refresh after transaction completion
   const triggerTierStatusRefresh = useCallback(() => {
-    console.log("🔄 Triggering tier status refresh");
     setTransactionCompleted((prev) => prev + 1);
   }, []); // Empty dependency array - this function never changes
 
-  // Get the embedded wallet or any Privy wallet
-  const embeddedWallet = wallets.find(
-    (wallet) => wallet.walletClientType === "privy"
-  );
+  // Get any Privy wallet
   const privyWallet = wallets.find(
     (wallet) =>
       wallet.walletClientType === "privy" ||
@@ -107,29 +102,17 @@ function HomeContent() {
       const now = Date.now();
       const timeSinceLastCheck = now - lastTierCheckTimeRef.current;
 
-      console.log(
-        "🔍 checkFreeTierStatus called for:",
-        userAddress,
-        "Time since last check:",
-        timeSinceLastCheck
-      );
-
       // Rate limit: only allow one request per 1 second
       if (timeSinceLastCheck < 1000) {
-        console.log(
-          "⏳ Rate limiting tier status check (too soon, need 1 second)"
-        );
         return;
       }
 
       // Prevent concurrent checks
       if (isCheckingTierRef.current) {
-        console.log("⏳ Tier status check already in progress");
         return;
       }
 
       try {
-        console.log("🔍 Checking real tier status for:", userAddress);
         isCheckingTierRef.current = true;
         lastTierCheckTimeRef.current = now;
 
@@ -194,39 +177,6 @@ function HomeContent() {
           }
         }
 
-        console.log("✅ Real tier status updated:", isFree ? "FREE" : "PAID");
-        console.log("🔍 Tier status details:", {
-          totalTransactions,
-          freeTierLimit,
-          freeTierRatio,
-          isFree,
-          freeTransactionsRemaining,
-          nextFreeTransaction,
-        });
-
-        // Enhanced debugging information
-        console.log("🐛 DEBUGGING TIER CALCULATION:");
-        console.log("  📊 totalTransactions:", totalTransactions);
-        console.log("  🎯 freeTierLimit:", freeTierLimit);
-        console.log("  🔄 freeTierRatio:", freeTierRatio);
-        console.log(
-          "  📈 transactionsAfterLimit:",
-          totalTransactions - freeTierLimit
-        );
-        console.log(
-          "  🔢 nextTransactionAfterLimit:",
-          totalTransactions - freeTierLimit + 1
-        );
-        console.log(
-          "  🧮 remainder check:",
-          `(${totalTransactions - freeTierLimit + 1} % ${freeTierRatio}) === 0`
-        );
-        console.log("  ✅ isFree result:", isFree);
-        console.log("  🎯 nextFreeTransaction:", nextFreeTransaction);
-        console.log(
-          "🔄 Setting tier status with totalTransactions:",
-          totalTransactions
-        );
         setIsFreeTransaction(isFree);
         setTierStatus({
           freeTransactionsRemaining,
@@ -234,10 +184,6 @@ function HomeContent() {
           isFree,
         });
         setTotalTransactions(totalTransactions);
-        console.log(
-          "✅ Tier status updated - totalTransactions set to:",
-          totalTransactions
-        );
       } catch (error) {
         console.error("Error checking free tier status:", error);
         setIsFreeTransaction(null);
@@ -268,18 +214,10 @@ function HomeContent() {
     useEffectCountRef.current += 1;
     const currentWalletAddress = wallets.length > 0 ? wallets[0].address : null;
 
-    console.log(
-      `🔍 useEffect #1 triggered #${useEffectCountRef.current} - wallet address:`,
-      currentWalletAddress
-    );
-
     // Check tier status when authenticated and wallet is available
     if (authenticated && currentWalletAddress) {
-      console.log("🔄 Checking tier status for:", currentWalletAddress);
-      console.log("🔄 Current totalTransactions state:", totalTransactions);
       checkFreeTierStatus(currentWalletAddress as `0x${string}`);
     } else if (!authenticated || !currentWalletAddress) {
-      console.log("🔄 No wallet or not authenticated, setting to null");
       setIsFreeTransaction(null);
       setTierStatus(null);
       setTotalTransactions(null);
@@ -289,19 +227,12 @@ function HomeContent() {
   // Refresh free tier status after transaction completion
   useEffect(() => {
     useEffectCountRef.current += 1;
-    console.log(
-      `🔍 useEffect #2 triggered #${useEffectCountRef.current} - transactionCompleted:`,
-      transactionCompleted
-    );
 
     if (transactionCompleted > 0) {
       const currentWalletAddress =
         wallets.length > 0 ? wallets[0].address : null;
 
       if (authenticated && currentWalletAddress) {
-        console.log(
-          "🔄 Refreshing free tier status after transaction completion"
-        );
         checkFreeTierStatus(currentWalletAddress as `0x${string}`);
       }
     }
@@ -336,7 +267,6 @@ function HomeContent() {
   const fetchBalances = useCallback(async (address: `0x${string}`) => {
     if (!address) return;
 
-    console.log("🔍 Fetching real balances for:", address);
     setBalancesLoading(true);
     try {
       const publicClient = createPublicClient({
@@ -369,13 +299,6 @@ function HomeContent() {
 
       const pyusdBalanceFormatted = formatUnits(pyusdBalanceWei, 6); // PYUSD has 6 decimals
       setPyusdBalance(pyusdBalanceFormatted);
-
-      console.log(
-        "✅ Real balances - ETH:",
-        ethBalanceFormatted,
-        "PYUSD:",
-        pyusdBalanceFormatted
-      );
     } catch (error) {
       console.error("Error fetching balances:", error);
       setEthBalance("0");
@@ -388,29 +311,11 @@ function HomeContent() {
   // Fetch balances when wallet address changes
   useEffect(() => {
     useEffectCountRef.current += 1;
-    console.log(
-      `🔍 useEffect #3 triggered #${useEffectCountRef.current} - privyWallet address:`,
-      privyWallet?.address
-    );
 
     if (privyWallet?.address) {
       fetchBalances(privyWallet.address as `0x${string}`);
     }
   }, [privyWallet?.address, fetchBalances]);
-
-  // Debug logging
-  console.log("🔍 Privy Debug:", {
-    ready,
-    authenticated,
-    walletsCount: wallets.length,
-    wallets: wallets.map((w) => ({
-      type: w.walletClientType,
-      address: w.address,
-    })),
-    embeddedWallet: embeddedWallet?.address,
-    privyWallet: privyWallet?.address,
-    signAuthorizationAvailable: !!signAuthorization,
-  });
 
   // Use Privy wallet address if available
   // const walletAddress = privyWallet?.address;
@@ -758,7 +663,6 @@ function HomeContent() {
           contractConfig={contractConfig}
           onTransactionComplete={triggerTierStatusRefresh}
           onTierStatusRefresh={() => {
-            console.log("🔄 Manual tier status refresh requested");
             lastTierCheckTimeRef.current = 0; // Reset rate limit
             triggerTierStatusRefresh();
           }}

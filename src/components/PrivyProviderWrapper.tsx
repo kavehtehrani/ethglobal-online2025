@@ -20,17 +20,6 @@ export function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
     return <div>Error: Privy App ID not configured</div>;
   }
 
-  console.log("🔧 Privy Provider Config:", {
-    appId: appId.substring(0, 8) + "...",
-    embeddedWallets: {
-      showWalletUIs: false,
-      createOnLogin: "all-users",
-      noPromptOnSignature: false,
-    },
-    loginMethods: ["email", "wallet"],
-    theme: theme,
-  });
-
   return (
     <PrivyProvider
       appId={appId}
