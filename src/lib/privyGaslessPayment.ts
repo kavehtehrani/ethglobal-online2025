@@ -99,12 +99,6 @@ export async function executePrivyGaslessPayment({
     nonce: number;
   }>;
 }) {
-  console.log("📊 Payment details:", {
-    recipient: recipientAddress,
-    amount,
-    token: "PYUSD",
-  });
-
   // Step 1: Setup public client
   const publicClient = createPublicClient({
     chain: sepolia,
@@ -169,23 +163,16 @@ export async function executePrivyGaslessPayment({
   if (totalTransactions < freeTierLimit) {
     isFree = true;
   } else {
-    const transactionsAfterLimit = totalTransactions - freeTierLimit;
-    const remainder = transactionsAfterLimit % freeTierRatio;
+    // const transactionsAfterLimit = totalTransactions - freeTierLimit;
+    const remainder = (totalTransactions - freeTierLimit) % freeTierRatio;
     isFree = remainder === 0;
   }
-
-  console.log("📊 User stats:", {
-    totalTransactions,
-    freeTierLimit,
-    freeTierRatio,
-  });
 
   // Debug logging for free tier calculation
 
   if (totalTransactions < freeTierLimit) {
   } else {
     const transactionsAfterLimit = totalTransactions - freeTierLimit;
-    const remainder = transactionsAfterLimit % freeTierRatio;
   }
 
   // Step 3: Create wallet client from Privy wallet
@@ -317,14 +304,6 @@ export async function executePrivyGaslessPayment({
 
   // Debug logging for batch transaction
 
-  calls.forEach((call, index) => {
-    console.log(`  - Call ${index + 1}:`, {
-      to: call.to,
-      data: call.data.slice(0, 10) + "...",
-      value: call.value.toString(),
-    });
-  });
-
   // Step 9: Send sponsored transaction
 
   const sponsorshipPolicyId = process.env.NEXT_PUBLIC_SPONSORSHIP_POLICY_ID;
@@ -341,10 +320,6 @@ export async function executePrivyGaslessPayment({
     },
     authorization,
   });
-
-  console.log(
-    "📊 Transaction counter incremented as part of batch transaction"
-  );
 
   return {
     success: true,

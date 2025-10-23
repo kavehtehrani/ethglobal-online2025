@@ -14,7 +14,6 @@ import {
   testBasicPrivyTransaction,
   testBasicPYUSDTransfer,
 } from "@/lib/basicPrivyTest";
-import { notification } from "@/lib/notifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AuthenticationSection } from "@/components/AuthenticationSection";
 import { BalanceDisplay } from "@/components/BalanceDisplay";
@@ -339,7 +338,6 @@ function HomeContent() {
         message: "",
         error: "Please enter a valid recipient address",
       });
-      notification.error("Please enter a valid recipient address");
       return;
     }
 
@@ -381,10 +379,6 @@ function HomeContent() {
           message: "Transaction Successful",
           error: null,
         });
-        notification.success(
-          `Basic ETH transfer successful! Sent ${result.amount} ETH to ${result.to}`,
-          result.txHash
-        );
         // Refresh balances after successful transaction
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
@@ -400,7 +394,6 @@ function HomeContent() {
         message: "",
         error: `Transfer failed: ${errorMessage}`,
       });
-      notification.error(`Basic ETH transfer failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -425,7 +418,6 @@ function HomeContent() {
         message: "",
         error: "Please enter a valid recipient address",
       });
-      notification.error("Please enter a valid recipient address");
       return;
     }
 
@@ -467,10 +459,6 @@ function HomeContent() {
           message: "Transaction Successful",
           error: null,
         });
-        notification.success(
-          `Basic PYUSD transfer successful! Sent ${result.amount} PYUSD to ${result.to}`,
-          result.txHash
-        );
         // Refresh balances after successful transaction
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
@@ -486,7 +474,6 @@ function HomeContent() {
         message: "",
         error: `Transfer failed: ${errorMessage}`,
       });
-      notification.error(`Basic PYUSD transfer failed: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -563,11 +550,6 @@ function HomeContent() {
           error: null,
         });
 
-        notification.success(
-          `Payment successful! Sent ${amount} PYUSD to ${recipient}`,
-          result.txHash
-        );
-
         // Refresh balances after successful payment
         if (privyWallet?.address) {
           fetchBalances(privyWallet.address as `0x${string}`);
@@ -581,7 +563,6 @@ function HomeContent() {
           message: "",
           error: "Payment failed",
         });
-        notification.error("Payment failed");
       }
     } catch (error) {
       console.error("Gasless payment error:", error);
@@ -591,9 +572,6 @@ function HomeContent() {
         message: "",
         error: error instanceof Error ? error.message : "Payment failed",
       });
-      notification.error(
-        error instanceof Error ? error.message : "Payment failed"
-      );
     } finally {
       setIsLoading(false);
     }

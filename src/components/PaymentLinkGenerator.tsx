@@ -7,7 +7,6 @@ import {
   XCircleIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
-import { notification } from "@/lib/notifications";
 import { CollapsibleSection } from "./CollapsibleSection";
 
 export function PaymentLinkGenerator() {
@@ -38,7 +37,6 @@ export function PaymentLinkGenerator() {
       const link = generatePaymentLink();
       await navigator.clipboard.writeText(link);
       setPaymentLinkCopied(true);
-      notification.success("Payment link copied to clipboard!");
 
       // Reset the copied state after 2 seconds
       setTimeout(() => {
@@ -46,7 +44,6 @@ export function PaymentLinkGenerator() {
       }, 2000);
     } catch (error) {
       console.error("Failed to copy payment link:", error);
-      notification.error("Failed to copy payment link");
     }
   };
 

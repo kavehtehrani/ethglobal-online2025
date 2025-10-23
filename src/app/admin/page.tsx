@@ -5,7 +5,6 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { sepolia } from "viem/chains";
 import { createPublicClient, createWalletClient, http, custom } from "viem";
 import { CONTRACTS, RPC_ENDPOINTS } from "@/lib/constants";
-import { notification } from "@/lib/notifications";
 import { getAddressLink } from "@/lib/explorer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -98,11 +97,9 @@ export default function AdminPage() {
         contractOwner.toLowerCase() === privyWallet.address.toLowerCase();
 
       setIsOwner(isCurrentUserOwner);
-
     } catch (error) {
       console.error("Error checking owner status:", error);
       setIsOwner(false);
-      notification.error("Failed to check owner status");
     } finally {
       setIsCheckingOwner(false);
     }
@@ -114,7 +111,6 @@ export default function AdminPage() {
 
     setIsLoadingConfig(true);
     try {
-
       const publicClient = createPublicClient({
         chain: sepolia,
         transport: http(RPC_ENDPOINTS.SEPOLIA),
@@ -130,7 +126,6 @@ export default function AdminPage() {
       const limit = Number(config[0]);
       const ratio = Number(config[1]);
 
-
       setCurrentConfig({ limit, ratio });
       setNewLimit(limit.toString());
       setNewRatio(ratio.toString());
@@ -138,7 +133,6 @@ export default function AdminPage() {
       setLastRefreshTime(new Date());
     } catch (error) {
       console.error("❌ Error loading current config:", error);
-      notification.error("Failed to load current configuration");
     } finally {
       setIsLoadingConfig(false);
     }
@@ -147,7 +141,6 @@ export default function AdminPage() {
   // Update configuration
   const updateConfig = async () => {
     if (!privyWallet || !isOwner) {
-      notification.error("Not authorized to update configuration");
       return;
     }
 
@@ -155,13 +148,11 @@ export default function AdminPage() {
     const ratio = parseInt(newRatio);
 
     if (isNaN(limit) || isNaN(ratio) || limit < 0 || ratio <= 0) {
-      notification.error("Please enter valid positive numbers");
       return;
     }
 
     setIsUpdating(true);
     try {
-
       const publicClient = createPublicClient({
         chain: sepolia,
         transport: http(RPC_ENDPOINTS.SEPOLIA),
@@ -183,29 +174,18 @@ export default function AdminPage() {
         account: privyWallet.address as `0x${string}`,
       });
 
-
       // Send the transaction
       const hash = await walletClient.writeContract(request);
 
       setLastTransactionHash(hash);
-      notification.info(`Transaction sent! Hash: ${hash}`);
 
       // Wait for transaction to be mined
       await publicClient.waitForTransactionReceipt({ hash });
-
-      notification.success(
-        `Configuration updated! New limit: ${limit}, New ratio: ${ratio}. Transaction: ${hash}`
-      );
 
       // Reload the configuration
       await loadCurrentConfig();
     } catch (error) {
       console.error("❌ Error updating configuration:", error);
-      notification.error(
-        `Failed to update configuration: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
     } finally {
       setIsUpdating(false);
     }

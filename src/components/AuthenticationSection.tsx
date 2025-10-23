@@ -3,7 +3,6 @@
 import { usePrivy, useWallets, useCreateWallet } from "@privy-io/react-auth";
 import { getAddressLink } from "@/lib/explorer";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { notification } from "@/lib/notifications";
 
 interface AuthenticationSectionProps {
   onWalletCreated?: () => void;
@@ -26,15 +25,9 @@ export function AuthenticationSection({
   const handleCreateEmbeddedWallet = async () => {
     try {
       await createWallet();
-      notification.success("Embedded wallet created successfully!");
       onWalletCreated?.();
     } catch (error) {
       console.error("❌ Failed to create embedded wallet:", error);
-      notification.error(
-        `Failed to create embedded wallet: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
     }
   };
 
