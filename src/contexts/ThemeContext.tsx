@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 
 type Theme = "light" | "dark";
 
@@ -21,7 +27,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTheme(savedTheme);
     } else {
       // Check system preference
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
       setTheme(prefersDark ? "dark" : "light");
     }
   }, []);
@@ -29,17 +37,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Update CSS variables, data attribute, and localStorage when theme changes
     const root = document.documentElement;
-    
+
     // Set data-theme attribute for CSS selectors
     root.setAttribute("data-theme", theme);
-    
+
     if (theme === "dark") {
-      root.style.setProperty("--background", "#0a0a0a");
-      root.style.setProperty("--foreground", "#ededed");
-      root.style.setProperty("--card-bg", "#1a1a1a");
-      root.style.setProperty("--card-border", "#2a2a2a");
-      root.style.setProperty("--text-muted", "#9ca3af");
-      root.style.setProperty("--text-secondary", "#6b7280");
+      root.style.setProperty("--background", "#0f0f23");
+      root.style.setProperty("--foreground", "#e2e8f0");
+      root.style.setProperty("--card-bg", "#1e293b");
+      root.style.setProperty("--card-border", "#334155");
+      root.style.setProperty("--text-muted", "#94a3b8");
+      root.style.setProperty("--text-secondary", "#64748b");
     } else {
       root.style.setProperty("--background", "#ffffff");
       root.style.setProperty("--foreground", "#171717");
@@ -48,12 +56,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.style.setProperty("--text-muted", "#6b7280");
       root.style.setProperty("--text-secondary", "#9ca3af");
     }
-    
+
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === "light" ? "dark" : "light");
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   return (

@@ -18,7 +18,7 @@ export function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg">
+    <div className="bg-[var(--card-bg)] mt-2 border border-[var(--card-border)] rounded-lg">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between p-4 text-left bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 transition-colors rounded-t-lg"

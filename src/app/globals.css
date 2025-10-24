@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Default dark theme values */
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card-bg: #1a1a1a;
-  --card-border: #2a2a2a;
+  /* Default dark theme values - improved for better readability */
+  --background: #0f0f23;
+  --foreground: #e2e8f0;
+  --card-bg: #1e293b;
+  --card-border: #334155;
   --accent: #676fff;
   --accent-hover: #5a5ce6;
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
-  --text-muted: #9ca3af;
-  --text-secondary: #6b7280;
+  --text-muted: #94a3b8;
+  --text-secondary: #64748b;
 }
 
 /* Light theme variables (will be applied via JavaScript) */

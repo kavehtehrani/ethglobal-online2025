@@ -140,9 +140,21 @@ export function WalletSection({
                 fetchBalances(privyWallet.address as `0x${string}`)
               }
               disabled={balancesLoading}
-              className="text-[var(--accent)] hover:text-[var(--accent-hover)] text-sm font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[var(--accent)] text-white px-3 py-1.5 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md"
             >
-              {balancesLoading ? "Refreshing..." : "Refresh"}
+              {balancesLoading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </>
+              )}
             </button>
           </div>
           <div className="flex gap-3">
