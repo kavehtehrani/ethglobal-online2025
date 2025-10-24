@@ -582,7 +582,7 @@ function HomeContent() {
                 </h1>
               </div>
               <p className="text-[var(--text-secondary)] mt-1">
-                Send PYUSD on Sepolia without paying gas fees!
+                Send PYUSD on Sepolia without paying gas fees
               </p>
             </div>
             <div className="w-16 flex justify-end">

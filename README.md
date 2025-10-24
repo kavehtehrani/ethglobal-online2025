@@ -17,25 +17,25 @@
 ![Pimlico](https://img.shields.io/badge/Pimlico-FF6B6B?style=for-the-badge)
 ![Viem](https://img.shields.io/badge/Viem-FF6B35?style=for-the-badge)
 
-🛈 This is a submission for [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/info/details) hackathon.
+<small><em>🛈 This is a submission for [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/info/details) hackathon.</em></small>
 
 # Problem
 
-One of the most confusing steps for a new user to crypto is the concept of "gas". In everyday life if you're using your credit card the fee to use the credit card is the same currency as you are paying in. That experience on chain breaks down into a token (usually stablecoin) and then another asset to pay to move the token in possession. It is confusing to want to send/receive some stablecoins and then realize you have to go through a bunch of hoops to obtain the necessary gas in the form of eth.
-
-![app-screenshot](/public/images/screenshot-app.png)
+One of the biggest hurdles for new crypto users is understanding “gas.” In the real world, when you pay with a credit card, the fee comes out in the same currency you’re spending. On chain, that logic breaks. You use one token (like a stablecoin) for payments, but need a completely different asset (ETH) just to move it. That extra step is confusing and a major barrier to everyday use.
 
 # Solution
 
-Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs - we handle that part through our sponsorship. We built a smart tier system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep users interested in using our app.
+Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs. That part is handled through our gas sponsorship. There is a reward system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep users interested in using the app.
 
-Note that even when we do take a fee, this fee is still in PYUSD and the user never has to worry about anything other than their use of the PYYSD stablecoin.
+Note that even when a fee is taken, this fee is still in PYUSD and the user never has to worry about anything other than their use of the PYYSD stablecoin.
 
 The app can also generate QR codes / links to request payments that are on-chain but are seamless.
 
+![app-screenshot](/public/images/screenshot-app.png)
+
 ## EIP-7702
 
-That is the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless translations possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
+That is the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless transactions possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
 
 The magic happens with EIP-7702 (making regular wallets act like smart accounts), Pimlico (sponsoring the gas), and Privy (making wallet creation user-friendly).
 
@@ -47,10 +47,11 @@ There is a [`TransactionCounter`](https://eth-sepolia.blockscout.com/address/0xE
 
 - **Frontend**: Next.js 15 with TypeScript and Tailwind
 - **Authentication**: Privy for embedded wallets (email or wallet login)
+- **Hardhat 3**: Hardhat 3 for local development and contract deployment/verification
 - **Blockchain**: Viem for clean Ethereum interactions
 - **Account Abstraction**: EIP-7702 for smart account functionality
 - **Gas Sponsorship**: Pimlico handles the gas fees
-- **Smart Contracts**: Custom tier system with admin controls
+- **Smart Contracts**: Custom reward system with admin controls
 
 # Local Deployment
 
@@ -88,14 +89,14 @@ There is a [`TransactionCounter`](https://eth-sepolia.blockscout.com/address/0xE
 
 - Connect with email or wallet
 - Send PYUSD without paying gas fees
-- See your tier status and remaining free transactions
+- See your reward status and remaining free transactions
 - Generate payment links to share with others
 - Test basic transactions to verify everything works
 
 ### For Admins
 
-- Access `/admin` to manage the tier system
-- Update free tier limits and ratios
+- Access `/admin` to manage the reward system
+- Update free reward limits and ratios
 - Monitor contract usage and configuration
 - Adjust service fees as needed
 
