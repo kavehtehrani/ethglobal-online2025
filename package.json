@@ -37,6 +37,7 @@
     "@nomicfoundation/hardhat-ignition": "^3.0.3",
     "@nomicfoundation/hardhat-ignition-viem": "^3.0.3",
     "@nomicfoundation/hardhat-keystore": "^3.0.1",
+    "@nomicfoundation/hardhat-verify": "^3.0.4",
     "@nomicfoundation/hardhat-viem": "^3.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
