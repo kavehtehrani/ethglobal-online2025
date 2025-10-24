@@ -15,9 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gasless PYUSD Payments",
+  title: "PyPay - Gasless PYUSD Payments",
   description:
-    "Send PYUSD on Sepolia without paying gas fees using EIP-7702 + Pimlico + Privy",
+    "Send PYUSD without gas fees using EIP-7702 Account Abstraction. Built with Next.js, Privy, and Pimlico.",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.ico', type: 'image/x-icon' }
+    ],
+  },
 };
 
 export default function RootLayout({
