@@ -1,12 +1,10 @@
-# PyPay
-
 <div align="center">
   <img src="/public/images/pyusd.png" alt="PyPay Logo" width="120" height="120">
   <br>
   <em>Send PYUSD without gas fees</em>
 </div>
 
-### Gasless PYUSD Payments
+## PyPay - Gasless PYUSD Payments
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
@@ -26,7 +24,7 @@ One of the most confusing steps for a new user to crypto is the concept of "gas"
 
 ![app-screenshot](/public/images/screenshot-app.png)
 
-## Solution
+# Solution
 
 Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs - we handle that part through our sponsorship. We built a smart tier system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep users interested in using our app.
 
@@ -34,7 +32,7 @@ Note that even when we do take a fee, this fee is still in PYUSD and the user ne
 
 The app can also generate QR codes / links to request payments that are on-chain but are seamless.
 
-# EIP-7702
+## EIP-7702
 
 That is the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless translations possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
 
@@ -52,6 +50,8 @@ There is a [`TransactionCounter`](https://eth-sepolia.blockscout.com/address/0xE
 - **Account Abstraction**: EIP-7702 for smart account functionality
 - **Gas Sponsorship**: Pimlico handles the gas fees
 - **Smart Contracts**: Custom tier system with admin controls
+
+# Local Deployment
 
 ## Quick Start
 
