@@ -1,14 +1,12 @@
 # PyPay
 
-### Gasless PYUSD Payments
-
 <div align="center">
   <img src="/public/images/pyusd.png" alt="PyPay Logo" width="120" height="120">
   <br>
   <em>Send PYUSD without gas fees</em>
 </div>
 
-### 🛈 This is a submission for [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/info/details) hackathon.
+### Gasless PYUSD Payments
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
@@ -19,6 +17,8 @@
 ![Pimlico](https://img.shields.io/badge/Pimlico-Gas_Sponsorship-FF6B6B?style=for-the-badge)
 ![Viem](https://img.shields.io/badge/Viem-Ethereum_Client-FF6B35?style=for-the-badge)
 ![PYUSD](https://img.shields.io/badge/PYUSD-Stablecoin-00D4AA?style=for-the-badge)
+
+🛈 This is a submission for [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/info/details) hackathon.
 
 # Problem
 
