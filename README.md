@@ -31,7 +31,8 @@ Note that even when a fee is taken, this fee is still in PYUSD and the user neve
 
 The app can also generate QR codes / links to request payments that are on-chain but are seamless.
 
-![app-screenshot](/public/images/screenshot-app.png)
+![screenshot-app](/public/images/screenshot-app.png)
+![screenshot-request-payment](/public/images/screenshot-request-payment.png)
 
 ## Gas Sponsorship Via EIP-7702
 
@@ -41,7 +42,7 @@ The magic happens with EIP-7702 (making regular wallets act like smart accounts)
 
 There is a [`TransactionCounter`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04?tab=contract) contract deployed that keeps track of user's total number of transfers and enables the owner to set parameters for gas sponsorship, i.e. initial number of free transactions and the frequency of free transfers afterward.
 
-![admin-dashboard-screenshot](/public/images/screenshot-admin-dashboard.png)
+![screenshot-admin-dashboard](/public/images/screenshot-admin-dashboard.png)
 
 ## Tech Stack
 
