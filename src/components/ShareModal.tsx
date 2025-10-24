@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { isAddress } from "viem";
+import Image from "next/image";
 import {
   XMarkIcon,
   ClipboardDocumentIcon,
@@ -28,7 +29,7 @@ export function ShareModal({
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
   // Generate payment link
-  const generatePaymentLink = () => {
+  const generatePaymentLink = useCallback(() => {
     const baseUrl = window.location.origin;
     const params = new URLSearchParams();
 
@@ -41,10 +42,10 @@ export function ShareModal({
     }
 
     return `${baseUrl}?${params.toString()}`;
-  };
+  }, [recipient, amount]);
 
   // Generate QR code
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     if (qrCodeDataUrl) return; // Already generated
 
     setIsGeneratingQR(true);
@@ -64,7 +65,7 @@ export function ShareModal({
     } finally {
       setIsGeneratingQR(false);
     }
-  };
+  }, [qrCodeDataUrl, generatePaymentLink]);
 
   // Copy payment link to clipboard
   const copyPaymentLink = async () => {
@@ -106,7 +107,7 @@ export function ShareModal({
     if (isOpen && !qrCodeDataUrl) {
       generateQRCode();
     }
-  }, [isOpen]);
+  }, [isOpen, qrCodeDataUrl, generateQRCode]);
 
   if (!isOpen) return null;
 
@@ -201,9 +202,11 @@ export function ShareModal({
               {qrCodeDataUrl && (
                 <div className="flex justify-center">
                   <div className="p-4 bg-white rounded-lg border border-[var(--card-border)]">
-                    <img
+                    <Image
                       src={qrCodeDataUrl}
                       alt="Payment QR Code"
+                      width={192}
+                      height={192}
                       className="w-48 h-48"
                     />
                   </div>
@@ -212,7 +215,7 @@ export function ShareModal({
             </div>
 
             {/* Native Share Button */}
-            {navigator.share && (
+            {typeof navigator !== "undefined" && "share" in navigator && (
               <button
                 onClick={shareViaWebAPI}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:bg-[var(--accent-hover)] transition-colors"

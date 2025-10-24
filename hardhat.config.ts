@@ -34,24 +34,6 @@ const config: HardhatUserConfig = {
     cache: "./cache",
     artifacts: "./artifacts",
   },
-  etherscan: {
-    apiKey: {
-      'sepolia': 'empty' // Not required by blockscout, can be any non-empty string
-    },
-    customChains: [
-      {
-        network: "sepolia",
-        chainId: 11155111,
-        urls: {
-          apiURL: "https://eth-sepolia.blockscout.com/api",
-          browserURL: "https://eth-sepolia.blockscout.com"
-        }
-      }
-    ]
-  },
-  sourcify: {
-    enabled: false
-  }
 };
 
 export default config;
