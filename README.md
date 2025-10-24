@@ -33,7 +33,7 @@ The app can also generate QR codes / links to request payments that are on-chain
 
 ![app-screenshot](/public/images/screenshot-app.png)
 
-## EIP-7702
+## Gas Sponsorship Via EIP-7702
 
 That is the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless transactions possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
 
