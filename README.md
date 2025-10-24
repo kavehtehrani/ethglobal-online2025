@@ -1,20 +1,21 @@
 <div align="center">
-  <img src="/images/pyusd.png" alt="PyPay Logo" width="120" height="120">
+  <img src="/public//images/pyusd.png" alt="PyPay Logo" width="120" height="120">
   <br>
   <em>Send PYUSD without gas fees</em>
 </div>
 
 ## PyPay - Gasless PYUSD Payments
 
+![PYUSD](https://img.shields.io/badge/PYUSD-00D4AA?style=for-the-badge)
+![Ethereum](https://img.shields.io/badge/Ethereum-627EEA?style=for-the-badge&logo=ethereum)
+![EIP-7702](https://img.shields.io/badge/EIP--7702-627EEA?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss)
-![Ethereum](https://img.shields.io/badge/Ethereum-627EEA?style=for-the-badge&logo=ethereum)
-![EIP-7702](https://img.shields.io/badge/EIP--7702-627EEA?style=for-the-badge)
+![Hardhat](https://img.shields.io/badge/Hardhat-FFF100?style=for-the-badge&logo=hardhat)
 ![Privy](https://img.shields.io/badge/Privy-6366F1?style=for-the-badge)
 ![Pimlico](https://img.shields.io/badge/Pimlico-FF6B6B?style=for-the-badge)
 ![Viem](https://img.shields.io/badge/Viem-FF6B35?style=for-the-badge)
-![PYUSD](https://img.shields.io/badge/PYUSD-00D4AA?style=for-the-badge)
 
 🛈 This is a submission for [ETHOnline 2025](https://ethglobal.com/events/ethonline2025/info/details) hackathon.
 
