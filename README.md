@@ -7,7 +7,7 @@
 ## PyPay - Gasless PYUSD Payments
 
 ![PYUSD](https://img.shields.io/badge/PYUSD-Stablecoin-00D4AA?style=for-the-badge)
-![Ethereum Sepolia](https://img.shields.io/badge/Ethereum-3C3C3D?style=for-the-badge&logo=ethereum)
+![Ethereum Sepolia](https://img.shields.io/badge/Ethereum_Sepolia-Testnet-3C3C3D?style=for-the-badge&logo=ethereum)
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?style=for-the-badge&logo=tailwind-css)
