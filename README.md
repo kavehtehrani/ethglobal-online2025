@@ -1,14 +1,21 @@
 # Gasless PYUSD Payments
 
-Ever tried sending crypto and got hit with those annoying gas fees? We built something that actually solves this problem for PYUSD payments on Sepolia. No more "why is my $10 transfer costing $5 in gas" moments.
+One of the most confusing steps for a new user to crypto is the concept of "gas". In everyday life if you're using your credit card the fee to use the credit card is the same currency as you are paying in. That experience on chain breaks down into a token (usually stablecoin) and then another asset to pay to move the token in possession. It is confusing to want to send/receive some stablecoins and then realize you have to go through a bunch of hoops to obtain the necessary gas in the form of eth.
+
+That is the the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless translations possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702)
+
+Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
+
 
 ![app-screenshot](/public/images/screenshot-app.png)
 
 ## What This Actually Does
 
-Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs - we handle that part. The twist? We built a smart tier system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep things sustainable.
+Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs - we handle that part through our sponsorship. We built a smart tier system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep users interested in using our app.
 
-The magic happens with EIP-7702 (making regular wallets act like smart accounts), Pimlico (sponsoring the gas), and Privy (making wallet creation dead simple). It's not just a demo - it's a working payment system that could actually be used.
+The magic happens with EIP-7702 (making regular wallets act like smart accounts), Pimlico (sponsoring the gas), and Privy (making wallet creation user-friendly).
+
+You can use this app much like 
 
 ![admin-dashboard-screenshot](/public/images/screenshot-admin-dashboard.png)
 
