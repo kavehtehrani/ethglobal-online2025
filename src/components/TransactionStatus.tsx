@@ -103,11 +103,13 @@ export function TransactionStatus({
                   href={getAddressLink(lastTransaction.to)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1"
+                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors inline-flex items-center gap-1 max-w-[60%] sm:max-w-none"
                 >
-                  {lastTransaction.to.slice(0, 6)}...
-                  {lastTransaction.to.slice(-4)}
-                  <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                  <span className="truncate">
+                    {lastTransaction.to.slice(0, 6)}...
+                    {lastTransaction.to.slice(-4)}
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-3 w-3 flex-shrink-0" />
                 </a>
               </div>
               <div className="flex justify-between items-center">
@@ -118,11 +120,13 @@ export function TransactionStatus({
                   href={getTransactionLink(lastTransaction.hash)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1"
+                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline inline-flex items-center gap-1 max-w-[60%] sm:max-w-none"
                 >
-                  {lastTransaction.hash.slice(0, 10)}...
-                  {lastTransaction.hash.slice(-8)}
-                  <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+                  <span className="truncate">
+                    {lastTransaction.hash.slice(0, 10)}...
+                    {lastTransaction.hash.slice(-8)}
+                  </span>
+                  <ArrowTopRightOnSquareIcon className="h-3 w-3 flex-shrink-0" />
                 </a>
               </div>
             </div>

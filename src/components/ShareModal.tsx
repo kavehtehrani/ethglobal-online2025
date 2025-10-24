@@ -147,7 +147,7 @@ export function ShareModal({
                 <span className="text-sm text-[var(--text-secondary)]">
                   To:
                 </span>
-                <span className="font-mono text-sm text-[var(--foreground)]">
+                <span className="font-mono text-sm text-[var(--foreground)] max-w-[60%] sm:max-w-none truncate">
                   {recipient.slice(0, 6)}...{recipient.slice(-4)}
                 </span>
               </div>

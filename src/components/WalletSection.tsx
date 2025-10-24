@@ -62,10 +62,12 @@ export function WalletSection({
                   href={`https://sepolia.etherscan.io/address/${privyWallet.address}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors"
+                  className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-mono text-sm underline transition-colors max-w-[60%] sm:max-w-none"
                 >
-                  {privyWallet.address.slice(0, 6)}...
-                  {privyWallet.address.slice(-4)}
+                  <span className="truncate">
+                    {privyWallet.address.slice(0, 6)}...
+                    {privyWallet.address.slice(-4)}
+                  </span>
                 </a>
               </div>
               <div className="flex items-center justify-between">
