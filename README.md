@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/public/images/pyusd.png" alt="PyPay Logo" width="120" height="120">
+  <img src="/images/pyusd.png" alt="PyPay Logo" width="120" height="120">
   <br>
   <em>Send PYUSD without gas fees</em>
 </div>

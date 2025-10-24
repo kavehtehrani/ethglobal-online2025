@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     "Send PYUSD without gas fees using EIP-7702 Account Abstraction. Built with Next.js, Privy, and Pimlico.",
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.ico', type: 'image/x-icon' }
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.ico", type: "image/x-icon" },
     ],
   },
 };

@@ -571,7 +571,7 @@ function HomeContent() {
             <div className="flex-1 text-center">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <Image
-                  src="/pyusd.png"
+                  src="/images/pyusd.png"
                   alt="PYUSD Logo"
                   width={40}
                   height={40}
