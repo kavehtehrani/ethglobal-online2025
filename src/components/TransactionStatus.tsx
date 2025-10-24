@@ -44,14 +44,20 @@ export function TransactionStatus({
         {/* Current Transaction Status */}
         {transactionStatus.isProcessing && (
           <div className="bg-[var(--card-bg)] border border-[var(--accent)] p-3 rounded-lg mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)]"></div>
-              <div>
+            <div className="flex items-start space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--accent)] flex-shrink-0 mt-0.5"></div>
+              <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-[var(--foreground)]">
                   {transactionStatus.type}
                 </h3>
                 <p className="text-[var(--text-muted)]">
-                  {transactionStatus.message}
+                  {transactionStatus.message.includes("0x") &&
+                  transactionStatus.message.length > 42
+                    ? transactionStatus.message.replace(
+                        /(0x[a-fA-F0-9]{40,})/g,
+                        (match) => `${match.slice(0, 6)}...${match.slice(-4)}`
+                      )
+                    : transactionStatus.message}
                 </p>
               </div>
             </div>
@@ -60,13 +66,24 @@ export function TransactionStatus({
 
         {transactionStatus.error && (
           <div className="bg-[var(--card-bg)] border border-[var(--error)] p-3 rounded-lg mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="text-[var(--error)] text-xl">❌</div>
-              <div>
+            <div className="flex items-start space-x-3">
+              <div className="text-[var(--error)] text-xl flex-shrink-0 mt-0.5">
+                ❌
+              </div>
+              <div className="min-w-0 flex-1">
                 <h3 className="font-semibold text-[var(--foreground)]">
                   Transaction Failed
                 </h3>
-                <p className="text-[var(--error)]">{transactionStatus.error}</p>
+                <p className="text-[var(--error)]">
+                  {transactionStatus.error &&
+                  transactionStatus.error.includes("0x") &&
+                  transactionStatus.error.length > 42
+                    ? transactionStatus.error.replace(
+                        /(0x[a-fA-F0-9]{40,})/g,
+                        (match) => `${match.slice(0, 6)}...${match.slice(-4)}`
+                      )
+                    : transactionStatus.error}
+                </p>
               </div>
             </div>
           </div>

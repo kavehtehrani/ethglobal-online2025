@@ -49,3 +49,4 @@ next-env.d.ts
 # hardhat ignition deployment artifacts
 /ignition/deployments/
 /ethglobal_submission.txt
+/public/images/cover_image.xcf
