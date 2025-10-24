@@ -1,72 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { isAddress } from "viem";
 import {
   CheckCircleIcon,
   XCircleIcon,
-  ClipboardDocumentIcon,
-  QrCodeIcon,
+  ShareIcon,
 } from "@heroicons/react/24/outline";
 import { CollapsibleSection } from "./CollapsibleSection";
-import QRCode from "qrcode";
+import { ShareModal } from "./ShareModal";
 
 export function PaymentLinkGenerator() {
-  const [showPaymentLink, setShowPaymentLink] = useState(false);
-  const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
   const [paymentLinkRecipient, setPaymentLinkRecipient] = useState<string>("");
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>("");
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
-  const [showQRCode, setShowQRCode] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
-  // Generate payment link
-  const generatePaymentLink = () => {
-    const baseUrl = window.location.origin;
-    const params = new URLSearchParams();
-
-    if (paymentLinkRecipient && isAddress(paymentLinkRecipient)) {
-      params.set("to", paymentLinkRecipient);
-    }
-
-    if (paymentLinkAmount && !isNaN(parseFloat(paymentLinkAmount))) {
-      params.set("amount", paymentLinkAmount);
-    }
-
-    return `${baseUrl}?${params.toString()}`;
-  };
-
-  // Generate QR code for payment link
-  const generateQRCode = async () => {
-    try {
-      const link = generatePaymentLink();
-      const qrCodeDataUrl = await QRCode.toDataURL(link, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
-      });
-      setQrCodeDataUrl(qrCodeDataUrl);
-      setShowQRCode(true);
-    } catch (error) {
-      console.error("Failed to generate QR code:", error);
-    }
-  };
-
-  // Copy payment link to clipboard
-  const copyPaymentLink = async () => {
-    try {
-      const link = generatePaymentLink();
-      await navigator.clipboard.writeText(link);
-      setPaymentLinkCopied(true);
-
-      // Reset the copied state after 2 seconds
-      setTimeout(() => {
-        setPaymentLinkCopied(false);
-      }, 2000);
-    } catch (error) {
-      console.error("Failed to copy payment link:", error);
+  // Open share modal
+  const openShareModal = () => {
+    if (
+      paymentLinkRecipient &&
+      paymentLinkAmount &&
+      isAddress(paymentLinkRecipient)
+    ) {
+      setShowShareModal(true);
     }
   };
 
@@ -119,15 +75,16 @@ export function PaymentLinkGenerator() {
             />
           </div>
           <button
-            onClick={() => setShowPaymentLink(!showPaymentLink)}
+            onClick={openShareModal}
             disabled={
               !paymentLinkRecipient ||
               !paymentLinkAmount ||
               !isAddress(paymentLinkRecipient)
             }
-            className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+            className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap flex items-center gap-2"
           >
-            Generate Link
+            <ShareIcon className="h-4 w-4" />
+            Share Payment
           </button>
         </div>
 
@@ -173,79 +130,27 @@ export function PaymentLinkGenerator() {
               />
             </div>
             <button
-              onClick={() => setShowPaymentLink(!showPaymentLink)}
+              onClick={openShareModal}
               disabled={
                 !paymentLinkRecipient ||
                 !paymentLinkAmount ||
                 !isAddress(paymentLinkRecipient)
               }
-              className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap self-end"
+              className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap self-end flex items-center gap-2"
             >
-              Generate Link
+              <ShareIcon className="h-4 w-4" />
+              Share Payment
             </button>
           </div>
         </div>
 
-        {showPaymentLink && (
-          <div className="p-4 bg-[var(--background)] border border-[var(--card-border)] rounded-lg">
-            <p className="text-xs text-[var(--text-secondary)] mb-3">
-              Share this link to pre-fill the payment form:
-            </p>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={generatePaymentLink()}
-                readOnly
-                className="flex-1 px-3 py-2 text-sm bg-[var(--card-bg)] border border-[var(--card-border)] rounded text-[var(--foreground)] font-mono"
-              />
-              <button
-                onClick={copyPaymentLink}
-                disabled={paymentLinkCopied}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  paymentLinkCopied
-                    ? "bg-[var(--success)] text-white"
-                    : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                }`}
-              >
-                <ClipboardDocumentIcon className="h-4 w-4" />
-                {paymentLinkCopied ? "Copied!" : "Copy"}
-              </button>
-            </div>
-            
-            {/* QR Code Section */}
-            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs text-[var(--text-secondary)]">
-                  📱 Or scan this QR code with your phone:
-                </p>
-                <button
-                  onClick={generateQRCode}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
-                >
-                  <QrCodeIcon className="h-4 w-4" />
-                  {showQRCode ? "Regenerate QR" : "Generate QR"}
-                </button>
-              </div>
-              
-              {showQRCode && qrCodeDataUrl && (
-                <div className="flex justify-center">
-                  <div className="p-4 bg-white rounded-lg border border-[var(--card-border)]">
-                    <img 
-                      src={qrCodeDataUrl} 
-                      alt="Payment QR Code" 
-                      className="w-48 h-48"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="mt-2 text-xs text-[var(--text-secondary)]">
-              💡 Recipients can click this link or scan the QR code to automatically fill in the
-              payment details
-            </div>
-          </div>
-        )}
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          recipient={paymentLinkRecipient}
+          amount={paymentLinkAmount}
+        />
       </div>
     </CollapsibleSection>
   );
