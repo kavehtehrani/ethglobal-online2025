@@ -1,19 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { isAddress } from "viem";
 import {
   CheckCircleIcon,
   XCircleIcon,
   ClipboardDocumentIcon,
+  QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import { CollapsibleSection } from "./CollapsibleSection";
+import QRCode from "qrcode";
 
 export function PaymentLinkGenerator() {
   const [showPaymentLink, setShowPaymentLink] = useState(false);
   const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
   const [paymentLinkRecipient, setPaymentLinkRecipient] = useState<string>("");
   const [paymentLinkAmount, setPaymentLinkAmount] = useState<string>("");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>("");
+  const [showQRCode, setShowQRCode] = useState(false);
 
   // Generate payment link
   const generatePaymentLink = () => {
@@ -29,6 +33,25 @@ export function PaymentLinkGenerator() {
     }
 
     return `${baseUrl}?${params.toString()}`;
+  };
+
+  // Generate QR code for payment link
+  const generateQRCode = async () => {
+    try {
+      const link = generatePaymentLink();
+      const qrCodeDataUrl = await QRCode.toDataURL(link, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeDataUrl(qrCodeDataUrl);
+      setShowQRCode(true);
+    } catch (error) {
+      console.error("Failed to generate QR code:", error);
+    }
   };
 
   // Copy payment link to clipboard
@@ -188,8 +211,37 @@ export function PaymentLinkGenerator() {
                 {paymentLinkCopied ? "Copied!" : "Copy"}
               </button>
             </div>
+            
+            {/* QR Code Section */}
+            <div className="mt-4 pt-4 border-t border-[var(--card-border)]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs text-[var(--text-secondary)]">
+                  📱 Or scan this QR code with your phone:
+                </p>
+                <button
+                  onClick={generateQRCode}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  <QrCodeIcon className="h-4 w-4" />
+                  {showQRCode ? "Regenerate QR" : "Generate QR"}
+                </button>
+              </div>
+              
+              {showQRCode && qrCodeDataUrl && (
+                <div className="flex justify-center">
+                  <div className="p-4 bg-white rounded-lg border border-[var(--card-border)]">
+                    <img 
+                      src={qrCodeDataUrl} 
+                      alt="Payment QR Code" 
+                      className="w-48 h-48"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <div className="mt-2 text-xs text-[var(--text-secondary)]">
-              💡 Recipients can click this link to automatically fill in the
+              💡 Recipients can click this link or scan the QR code to automatically fill in the
               payment details
             </div>
           </div>
