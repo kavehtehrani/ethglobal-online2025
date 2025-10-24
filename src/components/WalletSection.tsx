@@ -186,7 +186,7 @@ export function WalletSection({
             <div className="flex-1 bg-[var(--background)] border border-[var(--card-border)] p-3 rounded">
               <div className="flex items-center gap-2 mb-1">
                 <Image
-                  src="/images/pyusd.png"
+                  src="/images/pypay.png"
                   alt="PYUSD"
                   width={16}
                   height={16}
