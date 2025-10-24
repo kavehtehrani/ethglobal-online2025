@@ -1,28 +1,59 @@
 # Gasless PYUSD Payments
 
-A clean Next.js application for sending PYUSD on Sepolia without paying gas fees using EIP-7702 + Pimlico + Privy with smart contract-based tiered fee system.
+Ever tried sending crypto and got hit with those annoying gas fees? We built something that actually solves this problem for PYUSD payments on Sepolia. No more "why is my $10 transfer costing $5 in gas" moments.
 
-## Features
+![app-screenshot](/public/images/screenshot-app.png)
 
-- ✅ **Privy Authentication**: Secure embedded wallet with email/wallet login
-- ✅ **EIP-7702 Support**: Make your EOA act as a smart account
-- ✅ **Gasless Transactions**: Pimlico sponsors gas fees
-- ✅ **Smart Contract Tier System**: TransactionCounter.sol tracks usage and determines free/paid transactions
-- ✅ **Modular UI Components**: Refactored into reusable, maintainable components
-- ✅ **Admin Panel**: Contract administration with tier configuration management
-- ✅ **Tier Status Display**: Real-time free/paid transaction indicators with debugging
-- ✅ **Payment Link Generation**: Shareable payment links with pre-filled amounts
+## What This Actually Does
 
-## Setup
+Think of this as Venmo, but for PYUSD, and it actually works without you paying gas fees. Users can send PYUSD to anyone without worrying about gas costs - we handle that part. The twist? We built a smart tier system that gives users free transactions to try it out, then switches to a "1 in X" free model to keep things sustainable.
 
-1. **Install dependencies**:
+The magic happens with EIP-7702 (making regular wallets act like smart accounts), Pimlico (sponsoring the gas), and Privy (making wallet creation dead simple). It's not just a demo - it's a working payment system that could actually be used.
+
+![admin-dashboard-screenshot](/public/images/screenshot-admin-dashboard.png)
+
+
+## Key Features
+
+- **Zero Gas for Users**: Send PYUSD without paying gas fees (we sponsor them)
+- **Smart Tier System**: Free transactions to start, then a sustainable model
+- **Real Wallet Integration**: Works with any wallet through Privy's embedded system
+- **Admin Controls**: Contract owners can adjust the tier system as needed
+- **Payment Links**: Generate shareable links for payments (like PayPal links)
+- **Live Contract Integration**: Everything runs on real Sepolia contracts
+
+## The Technical Stack
+
+- **Frontend**: Next.js 15 with TypeScript and Tailwind
+- **Authentication**: Privy for embedded wallets (email or wallet login)
+- **Blockchain**: Viem for clean Ethereum interactions
+- **Account Abstraction**: EIP-7702 for smart account functionality
+- **Gas Sponsorship**: Pimlico handles the gas fees
+- **Smart Contracts**: Custom tier system with admin controls
+
+## How the Tier System Works
+
+We didn't just build a gasless payment app - we built a sustainable one. The smart contract tracks usage and implements a tier system:
+
+1. **Free Tier**: First few transactions are completely free (let users try it)
+2. **Paid Tier**: After that, every Xth transaction is free (e.g., 1 in 5)
+3. **Service Fee**: Paid transactions include a small service fee to keep it running
+4. **Real-time Updates**: Users see their tier status and next free transaction
+
+This isn't just theoretical - it's deployed and working on Sepolia.
+
+## Quick Start
+
+1. **Clone and install**:
 
    ```bash
+   git clone <repo>
+   cd gasless-payments-clean
    npm install
    ```
 
-2. **Create environment file**:
-   Create `.env.local` with:
+2. **Set up environment**:
+   Create `.env.local` with your keys:
 
    ```env
    # Privy Configuration
@@ -32,67 +63,55 @@ A clean Next.js application for sending PYUSD on Sepolia without paying gas fees
    # Pimlico Configuration
    NEXT_PUBLIC_PIMLICO_API_KEY=your_pimlico_api_key_here
    NEXT_PUBLIC_SPONSORSHIP_POLICY_ID=your_sponsorship_policy_id_here
-
-   # Optional: Custom EIP-7702 Implementation
-   # NEXT_PUBLIC_7702_IMPLEMENTATION=0xYourImplementationAddress
    ```
 
-3. **Start development server**:
+3. **Run it**:
    ```bash
    npm run dev
    ```
 
-## Usage
+## What You Can Do
 
-### User Interface
+### For Users
 
-1. **Login with Privy**: Use email or wallet to authenticate
-2. **View Tier Status**: See your current free/paid transaction status with real-time debugging
-3. **Test Basic Transactions**: Verify Privy wallet works with regular ETH/PYUSD transfers
-4. **Send Gasless Payments**: Use EIP-7702 + Pimlico for gasless PYUSD transfers with smart contract fee logic
-5. **Generate Payment Links**: Create shareable links with pre-filled recipient and amount
-6. **Monitor Balances**: View ETH and PYUSD balances with refresh functionality
+- Connect with email or wallet (no MetaMask required)
+- Send PYUSD without paying gas fees
+- See your tier status and remaining free transactions
+- Generate payment links to share with others
+- Test basic transactions to verify everything works
 
-### Admin Panel
+### For Admins
 
-1. **Access Admin Panel**: Navigate to `/admin` (contract owner only)
-2. **View Contract Status**: Check contract configuration and owner information
-3. **Update Tier Settings**: Modify free tier limit and ratio (e.g., 5 free, then 1 in 3 free)
-4. **Monitor Usage**: View current tier configuration and transaction counts
+- Access `/admin` to manage the tier system
+- Update free tier limits and ratios
+- Monitor contract usage and configuration
+- Adjust service fees as needed
 
-## Architecture
+## The Smart Contract
 
-- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
-- **Authentication**: Privy with embedded wallets
-- **Blockchain**: Viem for Ethereum interactions
-- **Account Abstraction**: Permissionless for EIP-7702
-- **Gas Sponsorship**: Pimlico for gasless transactions
+The `TransactionCounter.sol` contract is the brain of the operation:
 
-## Testing
+- **Tracks Usage**: Every user's transaction count is stored on-chain
+- **Tier Logic**: Implements the free/paid tier system
+- **Admin Controls**: Contract owner can update parameters
+- **EIP-7702 Ready**: Works seamlessly with account abstraction
+- **Real Deployment**: Live on Sepolia at `0xE6A149825907757801936FCdA35Ab96A13c8cB04`
 
-The app includes comprehensive testing capabilities:
-
-1. **Smart Contract Tests**: 20+ test cases covering all tier logic scenarios
-2. **Wallet Connectivity**: Basic ETH/PYUSD transfer testing
-3. **Gasless Payments**: EIP-7702 + Pimlico integration verification
-4. **Tier System**: Real-time free/paid transaction calculations with debugging
-5. **Admin Functions**: Contract configuration and tier management testing
-6. **Payment Links**: URL parameter handling and sharing functionality
-
-## Network
+## Network Details
 
 - **Chain**: Sepolia Testnet
 - **PYUSD Contract**: [`0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9`](https://docs.paxos.com/guides/stablecoin/pyusd/testnet)
 - **EIP-7702 Implementation**: [`0xe6Cae83BdE06E4c305530e199D7217f42808555B`](https://eth-sepolia.blockscout.com/address/0xe6Cae83BdE06E4c305530e199D7217f42808555B?tab=contract)
-- **TransactionCounter Contract**: Deployed smart contract for tier tracking at [`https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04)
+- **TransactionCounter**: [`0xE6A149825907757801936FCdA35Ab96A13c8cB04`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04)
 
-## Smart Contract Integration
+## Why This Matters
 
-The `TransactionCounter.sol` contract implements a tiered fee system:
+This isn't just another hackathon project. We built something that:
 
-- **Free Tier**: First m transactions are free to let users try the app
-- **Paid Tier**: After n transactions, every 5th transaction is free (e.g. 1 in 5)
-- **Service Fees**: Paid transactions include 0.5% service fee
-- **Real-time Tracking**: Contract tracks user transaction counts
-- **EIP-7702 Integration**: Works seamlessly with EIP-7702 transactions
-- **Admin Controls**: Contract owner can update tier configuration for the fee parameters
+- Actually solves a real problem (gas fees for small payments)
+- Uses PYUSD as intended (as a payment token)
+- Has a sustainable business model
+- Could be deployed and used by real users
+- Demonstrates the power of EIP-7702 + account abstraction
+
+The tier system ensures the service can run sustainably while giving users a great experience. It's the kind of infrastructure that could power real payment applications.
