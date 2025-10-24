@@ -2,6 +2,7 @@ import { HardhatUserConfig, configVariable } from "hardhat/config";
 import hardhatViem from "@nomicfoundation/hardhat-viem";
 import hardhatIgnition from "@nomicfoundation/hardhat-ignition-viem";
 import hardhatKeystore from "@nomicfoundation/hardhat-keystore";
+import "@nomicfoundation/hardhat-verify";
 
 const config: HardhatUserConfig = {
   plugins: [hardhatViem, hardhatIgnition, hardhatKeystore],
@@ -33,6 +34,24 @@ const config: HardhatUserConfig = {
     cache: "./cache",
     artifacts: "./artifacts",
   },
+  etherscan: {
+    apiKey: {
+      'sepolia': 'empty' // Not required by blockscout, can be any non-empty string
+    },
+    customChains: [
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://eth-sepolia.blockscout.com/api",
+          browserURL: "https://eth-sepolia.blockscout.com"
+        }
+      }
+    ]
+  },
+  sourcify: {
+    enabled: false
+  }
 };
 
 export default config;

@@ -12,7 +12,6 @@ The magic happens with EIP-7702 (making regular wallets act like smart accounts)
 
 ![admin-dashboard-screenshot](/public/images/screenshot-admin-dashboard.png)
 
-
 ## Key Features
 
 - **Zero Gas for Users**: Send PYUSD without paying gas fees (we sponsor them)
@@ -102,7 +101,7 @@ The `TransactionCounter.sol` contract is the brain of the operation:
 - **Chain**: Sepolia Testnet
 - **PYUSD Contract**: [`0xCaC524BcA292aaade2DF8A05cC58F0a65B1B3bB9`](https://docs.paxos.com/guides/stablecoin/pyusd/testnet)
 - **EIP-7702 Implementation**: [`0xe6Cae83BdE06E4c305530e199D7217f42808555B`](https://eth-sepolia.blockscout.com/address/0xe6Cae83BdE06E4c305530e199D7217f42808555B?tab=contract)
-- **TransactionCounter**: [`0xE6A149825907757801936FCdA35Ab96A13c8cB04`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04)
+- **TransactionCounter**: [`0xE6A149825907757801936FCdA35Ab96A13c8cB04`](https://eth-sepolia.blockscout.com/address/0xE6A149825907757801936FCdA35Ab96A13c8cB04?tab=contract)
 
 ## Why This Matters
 
