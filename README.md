@@ -34,6 +34,12 @@ The app can also generate QR codes / links to request payments that are on-chain
 ![screenshot-app](/public/images/screenshot-app.png)
 ![screenshot-request-payment](/public/images/screenshot-request-payment.png)
 
+## Demo Walkthrough 🎥
+
+Watch the complete demo to see PyPay in action:
+
+[![PyPay Demo Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/EjNZSOhlvrg)
+
 ## Gas Sponsorship Via EIP-7702
 
 That is the core of "gasless" payments that went live earlier via Pectra's upgrade that made gasless transactions possible via [EIP-7702](https://eips.ethereum.org/EIPS/eip-7702) Using this app, the users can send and request everyday payments in PYUSD without worrying about the scary part: gas fees.
