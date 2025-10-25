@@ -38,7 +38,7 @@ The app can also generate QR codes / links to request payments that are on-chain
 
 Watch the complete demo to see PyPay in action:
 
-[![PyPay Demo Video](https://img.youtube.com/vi/EjNZSOhlvrg/0.jpg)](https://youtu.be/EjNZSOhlvrg)
+[![PyPay Demo Video](https://img.youtube.com/vi/EjNZSOhlvrg/0.jpg)](https://www.youtube.com/watch?v=EjNZSOhlvrg)
 
 ## Gas Sponsorship Via EIP-7702
 
